@@ -71,11 +71,10 @@ Chess-with-AI/
 ├── main.py            # File chính để chạy chương trình
 ├── board.py           # Lớp đại diện cho bàn cờ
 ├── pieces.py          # Các lớp cho các quân cờ
-├── ai.py              # Triển khai AI
+├── learning_chess_ai.py     # Triển khai AI
 ├── game.py            # Quản lý trạng thái trò chơi
 ├── utils.py           # Tiện ích hỗ trợ
 ├── assets/            # Hình ảnh và âm thanh
-├── saved_games/       # Lưu trữ các ván cờ đã lưu
 └── requirements.txt   # Các thư viện phụ thuộc
 ```
 
