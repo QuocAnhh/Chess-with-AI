@@ -1,0 +1,3 @@
+pip install pygame python-chess numpy psutil matplotlib
+
+Set-ExecutionPolicy Unrestricted -Scope Process
