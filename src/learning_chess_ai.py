@@ -4,8 +4,6 @@ import time
 import os
 import chess.pgn
 import pickle
-import io
-from datetime import datetime
 
 
 class ChessAI:

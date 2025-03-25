@@ -61,7 +61,6 @@ Dự án sử dụng thuật toán Minimax với cắt tỉa Alpha-Beta để đ
 
 - Python
 - Pygame cho giao diện đồ họa
-- Numpy cho các tính toán hiệu suất cao
 
 ## 🔄 Cấu trúc dự án
 
@@ -78,7 +77,7 @@ Chess-with-AI/
 
 ## 🤝 Đóng góp
 
-Mọi đóng góp đều được hoan nghênh! Nếu bạn muốn đóng góp vào dự án, hãy làm theo các bước sau:
+Dự án vẫn đang trong giai đoạn hoàn thiện, vậy nên mọi đóng góp của mọi người đều rất đáng giá và hoan nghênh! Nếu mọi người muốn đóng góp vào dự án, hãy làm theo các bước sau:
 
 1. Fork repository
 2. Tạo branch mới (`git checkout -b feature/amazing-feature`)

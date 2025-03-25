@@ -1,5 +1,4 @@
 import chess
-import random
 from enum import Enum, auto
 from src.learning_chess_ai import ChessAI
 
