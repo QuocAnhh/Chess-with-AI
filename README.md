@@ -23,7 +23,7 @@ Một ứng dụng cờ vua với trí tuệ nhân tạo, cho phép người dù
 ## 🚀 Cài đặt
 
 ### Yêu cầu hệ thống
-- Python 3.8 hoặc cao hơn
+- Python 3.11.6 trở lên
 - Các thư viện cần thiết (liệt kê trong `requirements.txt`)
 
 ### Cách cài đặt
