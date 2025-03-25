@@ -24,28 +24,24 @@ class ChessAI:
         self.trained_games = 0   # Số ván đấu đã học
         self.learning_enabled = True  # Có cho phép học không
         
-        # Thư mục để lưu memory của AI
+        # Folder để lưu memory của AI
         self.memory_dir = os.path.join('data', 'memory')
         os.makedirs(self.memory_dir, exist_ok=True)
         
         # Tải memory nếu có
         self.load_memory()
     
-    # Thêm vào file learning_chess_ai.py
     def learn_from_pgn_file(self, pgn_file_path):
         """Học từ file PGN chứa nhiều ván cờ"""
         try:
-            # Thêm import cần thiết
-            import chess.pgn
             
-            # Mở file PGN
             with open(pgn_file_path, "r") as pgn_file:
                 games_learned = 0
                 
                 # Đọc từng ván cờ trong file PGN
                 while True:
                     game = chess.pgn.read_game(pgn_file)
-                    if game is None:  # Đã đọc hết file
+                    if game is None: # Đã đọc hết
                         break
                     
                     # Lấy kết quả ván đấu
@@ -75,7 +71,7 @@ class ChessAI:
                     self.trained_games = 0
                 self.trained_games += games_learned
                 
-                # Lưu bộ nhớ
+                # Lưu memory
                 self.save_memory()
                 
                 return games_learned
@@ -112,10 +108,8 @@ class ChessAI:
         """Lưu bộ nhớ vào file"""
         memory_file = os.path.join(self.memory_dir, f'chess_memory_d{self.difficulty}.pkl')
         try:
-            # Đảm bảo thư mục data/memory tồn tại
             os.makedirs(self.memory_dir, exist_ok=True)
             
-            # In đường dẫn tuyệt đối để debug
             abs_path = os.path.abspath(memory_file)
             print(f"Lưu memory vào: {abs_path}")
             
@@ -140,7 +134,6 @@ class ChessAI:
         if not legal_moves:
             return None
         
-        # Chọn ngẫu nhiên từ các nước đi hợp lệ
         return random.choice(legal_moves)
 
     def get_intermediate_move(self, board):
@@ -151,18 +144,18 @@ class ChessAI:
         if not legal_moves:
             return None
             
-        # Kiểm tra xem có nước nào bắt được quân không
+        # Check xem có nước nào bắt được quân không
         capturing_moves = []
         for move in legal_moves:
             if board.is_capture(move):
                 capturing_moves.append(move)
         
-        # Nếu có nước bắt quân, chọn ngẫu nhiên từ các nước này
+        # Nếu có, pick ngẫu nhiên từ các nước này
         if capturing_moves:
             print(f"Tìm thấy {len(capturing_moves)} nước bắt quân")
             return random.choice(capturing_moves)
         
-        # Không có nước bắt quân, chọn ngẫu nhiên
+        # Nếu không có, chọn ngẫu nhiên
         return random.choice(legal_moves)
     
     def get_move(self, board):
@@ -170,17 +163,16 @@ class ChessAI:
         print(f"AI get_move được gọi với độ khó: {self.difficulty}")
         
         try:
-            # Chuyển đổi tham số nếu nhận vào là game object thay vì board
             if hasattr(board, 'board'):
                 print("Tham số là game object, chuyển sang board")
                 board = board.board
                 
-            # Kiểm tra nếu không còn nước đi hợp lệ
+            # Check nếu không còn nước đi hợp lệ
             if not list(board.legal_moves):
                 print("Không có nước đi hợp lệ")
                 return None
                 
-            # Kiểm tra xem AI có đang bị chiếu không
+            # Check xem AI có đang bị chiếu không
             if board.is_check():
                 print("AI đang bị chiếu, tìm nước thoát chiếu")
                 return self.get_check_escape_move(board)
@@ -203,7 +195,7 @@ class ChessAI:
             import traceback
             traceback.print_exc()
             
-            # Trường hợp lỗi, thử trả về một nước đi ngẫu nhiên
+            # Nếu lỗi thì thử trả về một nước đi ngẫu nhiên
             try:
                 print("Thử chọn nước đi ngẫu nhiên do gặp lỗi")
                 return self.get_random_move(board)
@@ -220,17 +212,17 @@ class ChessAI:
     
     def get_intermediate_move(self, board):
         """Chọn nước đi với chiến thuật trung bình"""
-        # Ưu tiên các nước đi tấn công
+        # Ưu tiên tấn công
         capture_moves = []
         check_moves = []
         other_moves = []
         
         for move in board.legal_moves:
-            # Kiểm tra nếu là nước đi bắt quân
+            # Check nếu là nước đi bắt quân
             if board.is_capture(move):
                 capture_moves.append(move)
             
-            # Kiểm tra nếu nước đi tạo ra chiếu
+            # Check nếu nước đi tạo ra chiếu
             board.push(move)
             if board.is_check():
                 check_moves.append(move)
@@ -265,7 +257,6 @@ class ChessAI:
         random.shuffle(legal_moves)
         
         for move in legal_moves:
-            # Kiểm tra thời gian
             if time.time() - self.start_time > self.max_time:
                 break
                 
@@ -279,18 +270,18 @@ class ChessAI:
             else:
                 score = -self._minimax(board, depth-1, -beta, -alpha, False)
                 if self.learning_enabled:
-                    # Lưu trạng thái mới vào bộ nhớ
+                    # Save trạng thái mới vào bộ nhớ
                     self.memory[board_fen] = score
                     self.positions_seen += 1
             
             board.pop()
             
-            # Cập nhật nước đi tốt nhất
+            # Update nước đi tốt nhất
             if score > best_score:
                 best_score = score
                 best_move = move
                 
-            # Cập nhật alpha
+            # Update alpha
             alpha = max(alpha, score)
             
         return best_move if best_move else (legal_moves[0] if legal_moves else None)
@@ -299,7 +290,6 @@ class ChessAI:
         """Thuật toán minimax với alpha-beta pruning"""
         self.nodes += 1
         
-        # Kiểm tra thời gian
         if time.time() - self.start_time > self.max_time:
             return 0
         
@@ -504,7 +494,6 @@ class ChessAI:
                     self.learn_from_game(moves, result)
                     games_learned += 1
                     
-                    # Thông báo
                     if games_learned % 10 == 0:
                         print(f"Đã học {games_learned} ván cờ từ file PGN")
             

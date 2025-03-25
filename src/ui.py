@@ -27,7 +27,6 @@ class ChessUI:
         self.square_size = 80  # Kích thước mỗi ô cờ
         self.board_size = self.square_size * 8  # Kích thước bàn cờ (640px)
         
-        # Thêm không gian cho sidebar (tối thiểu 300px)
         sidebar_width = 300
         
         # Tính toán kích thước cửa sổ TỔNG THỂ
@@ -65,17 +64,14 @@ class ChessUI:
             self.font = pygame.font.SysFont(None, 28)
             self.small_font = pygame.font.SysFont(None, 20)
 
-        # Tải hình ảnh quân cờ
         self.pieces_images = {}
         self.load_pieces()
 
-        # Màu sắc
         self.WHITE_SQUARE = (240, 217, 181)
         self.BLACK_SQUARE = (181, 136, 99)
         self.HIGHLIGHT_COLOR = (124, 252, 0, 128)  # Màu highlight nước đi hợp lệ
         self.SELECT_COLOR = (255, 255, 0, 128)     # Màu quân cờ được chọn
 
-        # Trạng thái UI game
         self.selected_square = None
         self.legal_moves = []
         self.game_over = False
@@ -98,7 +94,6 @@ class ChessUI:
         self.sound_on = True
         self.load_sounds()
         
-        # Khởi tạo thông tin game
         if hasattr(self.game, 'mode'):
             print(f"Khởi tạo UI với chế độ game: {self.game.mode}")
         
@@ -148,7 +143,6 @@ class ChessUI:
 
     def draw_background(self, screen):
         """Tạo nền gradient cho giao diện"""
-        # Gradient từ xanh nhạt đến trắng
         color1 = (220, 240, 255)  # Xanh nhạt
         color2 = (240, 240, 240)  # Trắng
         
@@ -165,7 +159,6 @@ class ChessUI:
                 
     def render(self, screen):
         """Vẽ toàn bộ giao diện"""
-        # Xóa màn hình
         screen.fill((240, 240, 240))
         
         # Vẽ bàn cờ
@@ -179,7 +172,6 @@ class ChessUI:
             if hasattr(self, 'legal_moves') and self.legal_moves:
                 self.draw_legal_moves(screen)
         
-        # ĐẢM BẢO vẽ sidebar
         self.draw_sidebar(screen)
         
         # Cập nhật màn hình
@@ -187,7 +179,6 @@ class ChessUI:
 
     def draw_board(self, screen):
         """Vẽ bàn cờ vua với hai màu xen kẽ"""
-        # Màu cho các ô trên bàn cờ
         light_square = (240, 217, 181)  # Màu sáng (be nhạt)
         dark_square = (181, 136, 99)    # Màu tối (nâu)
         
@@ -253,7 +244,6 @@ class ChessUI:
         if screen is None:
             screen = self.screen
             
-        # Đảm bảo đã tải hình ảnh quân cờ
         if not hasattr(self, 'piece_images') or not self.piece_images:
             self.load_pieces()
         
@@ -299,7 +289,6 @@ class ChessUI:
             # Vị trí hiển thị thông báo
             screen.blit(overlay, (0, self.board_size // 2 - 30))
             
-            # Vẽ văn bản
             font = pygame.font.SysFont('Arial', 24, bold=True)
             text = font.render("AI ĐANG SUY NGHĨ...", True, (255, 255, 255))
             text_rect = text.get_rect(center=(self.board_size // 2, self.board_size // 2))
@@ -347,7 +336,6 @@ class ChessUI:
     
         for piece in pieces:
             try:
-                # Sử dụng mapping để lấy tên file thực tế
                 file_name = f'{file_mapping[piece]}.png'
                 image_path = os.path.join('assets', 'images', 'pieces', file_name)
                 print(f"Đang tải hình ảnh: {image_path}")
@@ -422,7 +410,7 @@ class ChessUI:
     def handle_event(self, event):
         """Xử lý tất cả các sự kiện từ người dùng"""
         if event.type == pygame.QUIT:
-            return False  # Thoát game
+            return False  
         
         # Xử lý khi game over
         if self.game_over:
@@ -496,7 +484,6 @@ class ChessUI:
                 
             # M: Về menu chính
             if event.key == pygame.K_m:
-                # Hiển thị menu chính (nếu có)
                 if hasattr(self, 'show_menu'):
                     self.show_menu()
                     return True
@@ -1504,7 +1491,7 @@ class ChessUI:
         self.running = True
         clock = pygame.time.Clock()
         
-        # Thêm biến trạng thái để xác định đang ở menu hay đang chơi
+        # Xác định đang ở menu hay đang chơi
         self.in_menu = True
         
         while self.running:
@@ -1535,16 +1522,12 @@ class ChessUI:
             
             # Vẽ giao diện
             if self.in_menu:
-                # Vẽ menu chính
                 self.draw_game_menu()
             else:
-                # Vẽ giao diện game
                 self.render(self.screen)
             
-            # Cập nhật màn hình
             pygame.display.flip()
             
-            # Giới hạn FPS
             clock.tick(60)
         
         pygame.quit()

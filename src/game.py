@@ -17,7 +17,7 @@ class GameState(Enum):
     STALEMATE = auto()
     DRAW = auto()
     RESIGNED = auto()
-    ONGOING = auto()  # Thêm trạng thái ONGOING
+    ONGOING = auto() 
 
 class ChessGame:
     def __init__(self, mode=GameMode.PLAYER_VS_AI, difficulty=2, ai=None):
@@ -30,7 +30,6 @@ class ChessGame:
         self.move_history = []
         self.captured_pieces = []
         
-        # Sử dụng ChessAI từ learning_chess_ai.py
         self.ai = ai if ai else ChessAI(difficulty=difficulty)
         self.ai_thinking = False
         
@@ -39,15 +38,15 @@ class ChessGame:
     
     def make_move(self, move):
         """Thực hiện nước đi và cập nhật trạng thái game"""
-        # Check if move is valid and game is not over
+
         if self.is_game_over():
             print("Game is already over, move rejected")
             return False
             
-        # Kiểm tra nếu nước đi hợp lệ
+        # Check nếu nước đi hợp lệ
         if move in self.board.legal_moves:
             print(f"Making move: {move.uci()}")
-            # Lưu quân bị bắt (nếu có)
+            # Lưu quân bị bắt
             to_square = move.to_square
             if self.board.piece_at(to_square):
                 self.captured_pieces.append((self.board.piece_at(to_square), self.current_player))
@@ -61,7 +60,7 @@ class ChessGame:
             # Chuyển lượt
             self.current_player = not self.current_player
             
-            # Cập nhật trạng thái game
+            # Update trạng thái game
             self.update_game_state()
             
             return True
@@ -120,16 +119,14 @@ class ChessGame:
         if self.mode != GameMode.PLAYER_VS_AI or not hasattr(self.ai, 'learn_from_game'):
             return
                 
-        # Xác định kết quả trò chơi chính xác hơn
-        result = "1/2-1/2"  # Hòa
+        result = "1/2-1/2"  # Huề
         
         if self.get_state() == GameState.CHECKMATE:
             result = "1-0" if not self.current_player else "0-1"
         elif self.get_state() == GameState.RESIGNED:
-            # Nếu ai đó đã đầu hàng
+            # Nếu 1 bên đã đầu hàng
             result = "0-1" if self.current_player else "1-0"
         
-        # Gọi phương thức học từ AI với thêm debug
         if hasattr(self.ai, 'learning_enabled') and self.ai.learning_enabled:
             print(f"AI đang học từ ván đấu với {len(self.move_history)} nước đi, kết quả: {result}")
             self.ai.learn_from_game(self.move_history, result)
