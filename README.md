@@ -2,7 +2,6 @@
 
 ![Chess Game](https://img.shields.io/badge/Chess-AI-brightgreen)
 ![Status](https://img.shields.io/badge/Status-Active-success)
-![License](https://img.shields.io/badge/License-MIT-blue)
 
 Một ứng dụng cờ vua với trí tuệ nhân tạo, cho phép người dùng chơi cờ với máy tính ở nhiều cấp độ khác nhau.
 
@@ -90,12 +89,9 @@ Mọi đóng góp đều được hoan nghênh! Nếu bạn muốn đóng góp v
 4. Push lên branch (`git push origin feature/amazing-feature`)
 5. Mở Pull Request
 
-## 📝 Giấy phép
-
-Dự án này được cấp phép theo giấy phép MIT - xem file [LICENSE](LICENSE) để biết thêm chi tiết.
 
 ## 📧 Liên hệ
 
-QuocAnh - [GitHub](https://github.com/QuocAnhh)
-
-Link dự án: [https://github.com/QuocAnhh/Chess-with-AI](https://github.com/QuocAnhh/Chess-with-AI)
+Github - [GitHub](https://github.com/QuocAnhh)
+Facebook - https://www.facebook.com/quocanh161004
+Telegram - @quoccankk
