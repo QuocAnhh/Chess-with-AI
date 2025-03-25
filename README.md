@@ -47,12 +47,11 @@ python main.py
 
 ### Hướng dẫn điều khiển:
 - Click chuột để chọn quân cờ và di chuyển
-- Nhấn `N` để bắt đầu ván mới
-- Nhấn `Z` để hoàn tác nước đi
-- Nhấn `Y` để làm lại nước đi
-- Nhấn `S` để lưu ván cờ
-- Nhấn `L` để tải ván cờ đã lưu
-- Nhấn `Esc` để thoát
+- Nhấn `R` để reset game/chơi ván mới
+- Nhấn `Z` để đi lại nước đi (Undo)
+- Nhấn `H` để hiển thị gợi ý nước đi tốt
+- Nhấn `P` để tạm dừng game
+- Nhấn `M` để quay về menu chính
 
 ## 🧠 Thuật toán AI
 
@@ -68,12 +67,11 @@ Dự án sử dụng thuật toán Minimax với cắt tỉa Alpha-Beta để đ
 
 ```
 Chess-with-AI/
-├── main.py            # File chính để chạy chương trình
+├── __init__.py         # Để Python nhận diện thư mục như 1 Package
 ├── board.py           # Lớp đại diện cho bàn cờ
-├── pieces.py          # Các lớp cho các quân cờ
 ├── learning_chess_ai.py     # Triển khai AI
 ├── game.py            # Quản lý trạng thái trò chơi
-├── utils.py           # Tiện ích hỗ trợ
+├── ui.py              # Tiện ích hỗ trợ
 ├── assets/            # Hình ảnh và âm thanh
 └── requirements.txt   # Các thư viện phụ thuộc
 ```
