@@ -1189,7 +1189,7 @@ class ChessUI:
                 text = font.render(f"{symbols[piece_type]} x {white_captured[piece_type]}", True, (0, 0, 0))
                 screen.blit(text, (white_x, y_offset))
             
-            if black_captured[piece_type] > 0:
+            if black_captured[piece_type] > 0:  
                 text = font.render(f"{symbols[piece_type]} x {black_captured[piece_type]}", True, (0, 0, 0))
                 screen.blit(text, (black_x, y_offset))
             
