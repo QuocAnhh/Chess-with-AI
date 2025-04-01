@@ -1,9 +1,11 @@
 import chess
-
+import pygame
 class ChessBoard:
     def __init__(self):
         self.board = chess.Board()
-    
+        # Tăng độ mượt của animation
+        pygame.display.set_caption("Chess Master 2025")
+        pygame.event.set_allowed([pygame.QUIT, pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN, pygame.MOUSEMOTION])
     def get_legal_moves(self):
         return list(self.board.legal_moves)
     

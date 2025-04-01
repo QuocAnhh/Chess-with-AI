@@ -8,6 +8,7 @@ from datetime import datetime
 import sys
 import time
 import tkinter as tk
+import math
 
 class ChessUI:
     def __init__(self, width=1200, height=700, game=None, ai=None):
@@ -19,9 +20,10 @@ class ChessUI:
         self.resign_button_rect = None
         self.load_pgn_rect = None
         self.learning_toggle_rect = None
+        
 
         # Chiều cao của thanh trạng thái
-        self.status_height = 40  
+        self.status_height = 50  # Tăng chiều cao thanh trạng thái để hiển thị đầy đủ thông tin
         
         # Kích thước cơ bản
         self.square_size = 80  # Kích thước mỗi ô cờ
@@ -67,6 +69,9 @@ class ChessUI:
         self.pieces_images = {}
         self.load_pieces()
 
+        self.piece_images = self.pieces_images
+
+
         self.WHITE_SQUARE = (240, 217, 181)
         self.BLACK_SQUARE = (181, 136, 99)
         self.HIGHLIGHT_COLOR = (124, 252, 0, 128)  # Màu highlight nước đi hợp lệ
@@ -99,6 +104,9 @@ class ChessUI:
         
         # Biến trạng thái cho menu
         self.in_menu = True
+        
+        # Định nghĩa font chữ cho thanh trạng thái
+        self.status_font = pygame.font.SysFont('Arial', 20)
         
     def game_over_action(self):
         '''Các hành động khi kết thúc game'''
@@ -173,6 +181,9 @@ class ChessUI:
                 self.draw_legal_moves(screen)
         
         self.draw_sidebar(screen)
+        
+        # Vẽ thanh trạng thái
+        self.draw_status()
         
         # Cập nhật màn hình
         pygame.display.flip()
@@ -488,7 +499,7 @@ class ChessUI:
                     self.show_menu()
                     return True
         
-        return True  # Tiếp tục game
+        return True  # tiếp tục game
 
     def is_promotion_move(self, move):
         """Kiểm tra xem nước đi có phải là phong cấp cho tốt không"""
@@ -567,7 +578,7 @@ class ChessUI:
             
             pygame.display.flip()
             
-            # Xử lý sự kiện
+            # process event
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     return None
@@ -626,24 +637,45 @@ class ChessUI:
             self.selected_square = None
             self.legal_moves = []
             
-            # Phát âm thanh nếu có
+            # Phát âm thanh
             if hasattr(self, 'undo_sound'):
                 self.undo_sound.play()
 
     def reset_game(self):
         """Khởi động lại game"""
-        # Lưu cài đặt hiện tại
-        game_mode = self.game.game_mode
-        difficulty = self.game.ai.difficulty if hasattr(self.game, 'ai') and self.game.ai else 2
-        
-        # Tạo game mới
-        self.game = ChessGame(game_mode=game_mode, difficulty=difficulty)
-        self.selected_square = None
-        self.legal_moves = []
-        
-        # Phát âm thanh nếu có
-        if hasattr(self, 'new_game_sound') and hasattr(self, 'sound_on') and self.sound_on:
-            self.new_game_sound.play()
+        try:
+            # Xác định chế độ game hiện tại
+            current_mode = "pvp"
+            if hasattr(self.game, 'game_mode'):
+                current_mode = self.game.game_mode
+            
+            # Xác định độ khó nếu có
+            difficulty = 2
+            if hasattr(self.game, 'ai') and hasattr(self.game.ai, 'difficulty'):
+                difficulty = self.game.ai.difficulty
+            
+            # Tạo game mới với cùng cài đặt
+            self.game = ChessGame()
+            if current_mode == "pve":
+                self.game.game_mode = "pve"
+            else:
+                self.game.game_mode = "pvp"
+                
+            self.ai.difficulty = difficulty
+            self.game.ai = self.ai
+            
+            # Reset trạng thái
+            self.selected_square = None
+            self.legal_moves = []
+            self.game_over = False
+            
+            # Phát âm thanh nếu có
+            if hasattr(self, 'new_game_sound') and hasattr(self, 'sound_on') and self.sound_on:
+                self.new_game_sound.play()
+                
+            print(f"Game đã được khởi động lại với chế độ {self.game.game_mode}")
+        except Exception as e:
+            print(f"Lỗi khởi động lại game: {str(e)}")
 
     def draw_ai_stats(self, screen, x, y):
         """Hiển thị thông tin thống kê về AI"""
@@ -693,35 +725,192 @@ class ChessUI:
     def show_hint(self):
         """Hiển thị gợi ý nước đi tốt nhất"""
         print("Showing hint...")  # Debug
-        if self.game.is_game_over() or not hasattr(self.game, 'ai'):
-            print("Cannot show hint: Game is over or AI not available")
+        if self.game.is_game_over():
+            print("Cannot show hint: Game is over")
             return
-        
-        if not hasattr(self.game, 'current_player'):
-            print("Cannot show hint: Game has no current_player attribute")
-            return
-        
-        # Lưu trạng thái hiện tại
-        current_player = self.game.current_player
         
         try:
             # Sử dụng AI để tìm nước đi gợi ý
-            if hasattr(self.game, 'ai') and hasattr(self.game.ai, 'get_smart_move'):
-                move = self.game.ai.get_smart_move(self.game, depth=2, max_time=1.0)
+            if hasattr(self.game, 'ai') and self.game.ai:
+                current_player = self.game.current_player
+                # Lấy nước đi gợi ý từ AI
+                move = self.game.ai.get_move(self.game.board)
                 print(f"AI suggested move: {move}")
+                
+                if move:
+                    # Hiển thị gợi ý
+                    self.hint_move = move
+                    self.hint_time = pygame.time.get_ticks()
+                    
+                    # Hiển thị hiệu ứng gợi ý trên bàn cờ
+                    # Lấy tọa độ đích và đi
+                    from_file = chess.square_file(move.from_square)
+                    from_rank = 7 - chess.square_rank(move.from_square)
+                    to_file = chess.square_file(move.to_square)
+                    to_rank = 7 - chess.square_rank(move.to_square)
+                    
+                    # Vẽ hình chữ nhật gợi ý ở vị trí xuất phát
+                    hint_rect1 = pygame.Rect(
+                        from_file * self.square_size,
+                        from_rank * self.square_size,
+                        self.square_size, self.square_size
+                    )
+                    hint_surface1 = pygame.Surface((self.square_size, self.square_size), pygame.SRCALPHA)
+                    hint_surface1.fill((0, 255, 0, 128))  # Màu xanh lá mờ
+                    self.screen.blit(hint_surface1, hint_rect1)
+                    
+                    # Vẽ hình chữ nhật gợi ý ở vị trí đích
+                    hint_rect2 = pygame.Rect(
+                        to_file * self.square_size,
+                        to_rank * self.square_size,
+                        self.square_size, self.square_size
+                    )
+                    hint_surface2 = pygame.Surface((self.square_size, self.square_size), pygame.SRCALPHA)
+                    hint_surface2.fill((255, 255, 0, 128))  # Màu vàng mờ
+                    self.screen.blit(hint_surface2, hint_rect2)
+                    
+                    # Vẽ mũi tên từ vị trí xuất phát đến vị trí đích
+                    start_pos = (
+                        from_file * self.square_size + self.square_size // 2,
+                        from_rank * self.square_size + self.square_size // 2
+                    )
+                    end_pos = (
+                        to_file * self.square_size + self.square_size // 2,
+                        to_rank * self.square_size + self.square_size // 2
+                    )
+                    pygame.draw.line(self.screen, (255, 0, 0), start_pos, end_pos, 3)
+                    
+                    # Hiển thị thông tin nước đi
+                    font = pygame.font.SysFont('Arial', 24)
+                    hint_text = font.render(f"Gợi ý: {move}", True, (255, 255, 255))
+                    text_rect = hint_text.get_rect(center=(self.board_size // 2, self.board_size - 20))
+                    text_bg = pygame.Surface((hint_text.get_width() + 20, hint_text.get_height() + 10), pygame.SRCALPHA)
+                    text_bg.fill((0, 0, 0, 180))
+                    self.screen.blit(text_bg, (text_rect.x - 10, text_rect.y - 5))
+                    self.screen.blit(hint_text, text_rect)
+                    
+                    # Cập nhật màn hình và đợi 2 giây
+                    pygame.display.flip()
+                    pygame.time.wait(2000)
             else:
-                print("AI or get_smart_move method not available")
+                print("AI not available")
             
-            if move:
-                # Hiển thị gợi ý
-                self.hint_move = move
-                self.hint_time = pygame.time.get_ticks()  # Thời điểm hiển thị gợi ý
-                print(f"Hint displayed: {move}")
-            
-            # Khôi phục trạng thái
-            self.game.current_player = current_player
         except Exception as e:
-            print(f"Error showing hint: {e}")
+            print(f"Error showing hint: {str(e)}")
+
+    def animate_move(self, move):
+        """Tạo hiệu ứng di chuyển quân cờ mượt"""
+        # Lấy vị trí bắt đầu và kết thúc
+        from_file = chess.square_file(move.from_square)
+        from_rank = 7 - chess.square_rank(move.from_square)
+        to_file = chess.square_file(move.to_square)
+        to_rank = 7 - chess.square_rank(move.to_square)
+        
+        # Tính tọa độ pixel
+        from_x = from_file * self.square_size
+        from_y = from_rank * self.square_size
+        to_x = to_file * self.square_size
+        to_y = to_rank * self.square_size
+        
+        # Lấy quân cờ từ vị trí ban đầu
+        piece = self.game.board.piece_at(move.from_square)
+        if not piece:
+            return
+        
+        # Xác định hình ảnh quân cờ
+        color = "w" if piece.color else "b"
+        piece_type = chess.piece_symbol(piece.piece_type).lower()
+        piece_key = color + piece_type
+        
+        if piece_key not in self.piece_images:
+            return
+        
+        # Hiệu ứng di chuyển
+        frames = 15  # Tăng số khung hình cho chuyển động mượt mà hơn
+        
+        piece_img = self.piece_images[piece_key]
+        
+        # Tạo hiệu ứng ánh sáng cho ô xuất phát
+        glow = pygame.Surface((self.square_size, self.square_size), pygame.SRCALPHA)
+        glow.fill((255, 255, 100, 100))  # Màu vàng nhạt
+        
+        for i in range(frames + 1):
+            # Vị trí hiện tại của quân cờ
+            progress = i / frames
+            current_x = from_x + (to_x - from_x) * progress
+            current_y = from_y + (to_y - from_y) * progress
+            
+            # Vẽ bàn cờ và các quân cờ
+            self.draw_board(self.screen)
+            
+            # Hiệu ứng sáng dần mờ trên ô xuất phát
+            if i < frames // 2:
+                alpha = 100 - (i * 200 // frames)
+                glow.set_alpha(alpha)
+                self.screen.blit(glow, (from_x, from_y))
+            
+            # Tạo bản sao tạm thời của bàn cờ
+            temp_board = self.game.board.copy()
+            temp_board.remove_piece_at(move.from_square)
+            
+            # Vẽ tất cả quân còn lại
+            for square in chess.SQUARES:
+                piece_at_square = temp_board.piece_at(square)
+                if not piece_at_square:
+                    continue
+                
+                # Tính toán vị trí pixel
+                file = chess.square_file(square)
+                rank = 7 - chess.square_rank(square)
+                
+                x = file * self.square_size
+                y = rank * self.square_size
+                
+                # Vẽ quân cờ
+                sq_color = "w" if piece_at_square.color else "b"
+                sq_piece_type = chess.piece_symbol(piece_at_square.piece_type).lower()
+                sq_piece_key = sq_color + sq_piece_type
+                
+                if sq_piece_key in self.piece_images:
+                    sq_piece_img = self.piece_images[sq_piece_key]
+                    sq_piece_x = x + (self.square_size - sq_piece_img.get_width()) // 2
+                    sq_piece_y = y + (self.square_size - sq_piece_img.get_height()) // 2
+                    self.screen.blit(sq_piece_img, (sq_piece_x, sq_piece_y))
+            
+            # Hiệu ứng bóng đổ cho quân đang di chuyển
+            shadow_offset = 3
+            shadow = piece_img.copy()
+            shadow.fill((0, 0, 0, 100), None, pygame.BLEND_RGBA_MULT)
+            shadow_x = current_x + (self.square_size - piece_img.get_width()) // 2 + shadow_offset
+            shadow_y = current_y + (self.square_size - piece_img.get_height()) // 2 + shadow_offset
+            self.screen.blit(shadow, (shadow_x, shadow_y))
+            
+            # Vẽ quân cờ đang di chuyển
+            piece_x = current_x + (self.square_size - piece_img.get_width()) // 2
+            piece_y = current_y + (self.square_size - piece_img.get_height()) // 2
+            self.screen.blit(piece_img, (piece_x, piece_y))
+            
+            # Hiệu ứng ánh sáng ở quân đang di chuyển
+            light_surface = pygame.Surface((piece_img.get_width(), piece_img.get_height()), pygame.SRCALPHA)
+            light_alpha = 100 - abs((i - frames//2) * 200 // frames)
+            light_surface.fill((255, 255, 255, max(0, light_alpha)))
+            self.screen.blit(light_surface, (piece_x, piece_y), special_flags=pygame.BLEND_ADD)
+            
+            # Vẽ sidebar
+            self.draw_sidebar(self.screen)
+            
+            pygame.display.flip()
+            pygame.time.wait(20)  # 20ms delay giữa các frame
+        
+        # Hiệu ứng ánh sáng khi quân đến đích
+        for i in range(5):  # 5 frames flash
+            alpha = 150 - i * 30  # Giảm dần độ trong suốt
+            flash = pygame.Surface((self.square_size, self.square_size), pygame.SRCALPHA)
+            flash.fill((255, 255, 100, alpha))
+            self.screen.blit(flash, (to_x, to_y))
+            pygame.display.flip()
+            pygame.time.wait(50)
+
     def handle_click(self, pos):
         """Xử lý sự kiện nhấp chuột trên bàn cờ"""
         if self.game.is_game_over() or (self.game.game_mode == "pve" and not self.game.current_player):
@@ -1044,18 +1233,39 @@ class ChessUI:
 
     def reset_game(self):
         """Khởi động lại game"""
-        # Lưu cài đặt hiện tại
-        game_mode = self.game.game_mode
-        difficulty = self.game.ai.difficulty if hasattr(self.game, 'ai') and self.game.ai else 2
-        
-        # Tạo game mới
-        self.game = ChessGame(game_mode=game_mode, difficulty=difficulty)
-        self.selected_square = None
-        self.legal_moves = []
-        
-        # Phát âm thanh nếu có
-        if hasattr(self, 'new_game_sound'):
-            self.new_game_sound.play()
+        try:
+            # Xác định chế độ game hiện tại
+            current_mode = "pvp"
+            if hasattr(self.game, 'game_mode'):
+                current_mode = self.game.game_mode
+            
+            # Xác định độ khó nếu có
+            difficulty = 2
+            if hasattr(self.game, 'ai') and hasattr(self.game.ai, 'difficulty'):
+                difficulty = self.game.ai.difficulty
+            
+            # Tạo game mới với cùng cài đặt
+            self.game = ChessGame()
+            if current_mode == "pve":
+                self.game.game_mode = "pve"
+            else:
+                self.game.game_mode = "pvp"
+                
+            self.ai.difficulty = difficulty
+            self.game.ai = self.ai
+            
+            # Reset trạng thái
+            self.selected_square = None
+            self.legal_moves = []
+            self.game_over = False
+            
+            # Phát âm thanh nếu có
+            if hasattr(self, 'new_game_sound') and hasattr(self, 'sound_on') and self.sound_on:
+                self.new_game_sound.play()
+                
+            print(f"Game đã được khởi động lại với chế độ {self.game.game_mode}")
+        except Exception as e:
+            print(f"Lỗi khởi động lại game: {str(e)}")
 
     def resign_game(self):
         """Đầu hàng trong game hiện tại"""
@@ -1151,127 +1361,230 @@ class ChessUI:
         pygame.display.flip()
         
     def draw_status(self):
-        """Updated status bar display"""
-        status_text = ""
-        
-        if self.game.is_game_over():
-            game_state = self.game.get_state()
-            if game_state == GameState.CHECKMATE:
-                winner = "Trắng" if not self.game.current_player else "Đen"
-                status_text = f"{winner} thắng! - Chiếu bí!"
-            elif game_state == GameState.STALEMATE:
-                status_text = "Hòa cờ - Bất phân thắng bại"
-            else:
-                status_text = "Hòa cờ"
+        """Vẽ thanh trạng thái phía dưới giao diện"""
+        status_rect = pygame.Rect(0, self.height - self.status_height, self.width, self.status_height)
+        pygame.draw.rect(self.screen, (200, 200, 200), status_rect)
+        pygame.draw.rect(self.screen, (0, 0, 0), status_rect, 2)
+
+        # Hiển thị thông tin trạng thái
+        if hasattr(self.game, 'current_player'):
+            player_text = f"Turn: {'White' if self.game.current_player else 'Black'}"
         else:
-            current_player = "Trắng" if self.game.current_player else "Đen"
-            status_text = f"Lượt của {current_player}"
-            if self.game.board.is_check():
-                status_text += " - CHIẾU!"
-    
-        # Vẽ nền cho status bar
-        status_bar_rect = pygame.Rect(0, self.board_size, self.width, self.status_height)
-        pygame.draw.rect(self.screen, (240, 240, 240), status_bar_rect)
-    
-        # Vẽ text trạng thái
-        status_surface = self.font.render(status_text, True, (0, 0, 0))
-        self.screen.blit(status_surface, (10, self.board_size + (self.status_height - status_surface.get_height()) // 2))
+            player_text = "Turn: N/A"
+
+        if hasattr(self.game, 'move_count'):
+            move_text = f"Moves: {self.game.move_count}"
+        else:
+            move_text = "Moves: N/A"
+
+        status_text = f"{player_text} | {move_text}"
+        text_surface = self.status_font.render(status_text, True, (0, 0, 0))
+        text_x = (self.width - text_surface.get_width()) // 2
+        text_y = self.height - self.status_height + (self.status_height - text_surface.get_height()) // 2
+        self.screen.blit(text_surface, (text_x, text_y))
     
     def draw_game_menu(self):
-        self.screen.fill((200, 200, 200))
-        # Điều chỉnh kích thước và vị trí của tiêu đề
-        title = self.font.render("CHESS GAME", True, (0, 0, 0))
-        self.screen.blit(title, (self.width // 2 - title.get_width() // 2, self.height // 6))
-    
-        # Điều chỉnh kích thước nút
-        button_width = min(200, self.width * 0.6)
-        button_height = min(50, self.height * 0.1)
-    
-        # Tạo các nút
+        # Màu nền gradient
+        for y in range(self.height):
+            color_value = 30 + int(30 * (y / self.height))
+            pygame.draw.line(self.screen, (color_value, color_value, color_value+10), 
+                        (0, y), (self.width, y))
+        
+        # Thêm background logo
+        if hasattr(self, 'background_image'):
+            bg_img = self.background_image
+            self.screen.blit(bg_img, (self.width//2 - bg_img.get_width()//2, 
+                                self.height//2 - bg_img.get_height()//2))
+        
+        # Tiêu đề game với hiệu ứng phát sáng
+        title_font = pygame.font.SysFont('Segoe UI', 72, bold=True)
+        title_text = "CHESS MASTER"
+        title_color = (255, 215, 0)  # Gold
+        title = title_font.render(title_text, True, title_color)
+        
+        # Hiệu ứng ánh sáng cho tiêu đề
+        for i in range(3):
+            glow = title_font.render(title_text, True, (*title_color[:3], 50-i*15))
+            self.screen.blit(glow, (self.width//2 - title.get_width()//2 - i*2, 
+                                self.height//5 - i*2))
+            self.screen.blit(glow, (self.width//2 - title.get_width()//2 + i*2, 
+                                self.height//5 + i*2))
+        
+        # Tiêu đề chính
+        self.screen.blit(title, (self.width//2 - title.get_width()//2, 
+                            self.height//5))
+        
+        # Tạo các nút menu hiện đại
+        button_width = 300
+        button_height = 60
+        
+        # Nút Player vs Player
         pvp_button = pygame.Rect(
-            self.width // 2 - button_width // 2, 
-            self.height // 2 - button_height - 20, 
+            self.width//2 - button_width//2,
+            self.height//2 - button_height - 20,
             button_width, button_height
         )
+        
+        # Nút Player vs AI
         pve_button = pygame.Rect(
-            self.width // 2 - button_width // 2, 
-            self.height // 2 + 20, 
+            self.width//2 - button_width//2,
+            self.height//2 + 20,
             button_width, button_height
         )
-    
-        pygame.draw.rect(self.screen, (100, 100, 200), pvp_button)
-        pygame.draw.rect(self.screen, (100, 200, 100), pve_button)
-    
-        pvp_text = self.font.render("Nguoi - Nguoi", True, (0, 0, 0))
-        pve_text = self.font.render("Nguoi - May", True, (0, 0, 0))
-    
-        self.screen.blit(
-            pvp_text, 
-            (pvp_button.centerx - pvp_text.get_width() // 2,
-            pvp_button.centery - pvp_text.get_height() // 2)
-        )
-        self.screen.blit(
-            pve_text, 
-            (pve_button.centerx - pve_text.get_width() // 2,
-            pve_button.centery - pve_text.get_height() // 2)
-        )
-    
+        
+        # Kiểm tra hover
+        mouse_pos = pygame.mouse.get_pos()
+        pvp_hover = pvp_button.collidepoint(mouse_pos)
+        pve_hover = pve_button.collidepoint(mouse_pos)
+        
+        # Vẽ các nút với hiệu ứng gradient và hover
+        for button, is_hover, y_pos, text, color in [
+            (pvp_button, pvp_hover, self.height//2 - button_height - 20, "PLAYER vs PLAYER", (41, 128, 185)),
+            (pve_button, pve_hover, self.height//2 + 20, "PLAYER vs AI", (39, 174, 96))
+        ]:
+            # Màu nút dựa trên trạng thái hover
+            button_color = (color[0]+20, color[1]+20, color[2]+20) if is_hover else color
+            
+            # Vẽ nút với gradient
+            for i in range(button_height):
+                grad_value = button_color[1] - int(20 * (i / button_height))
+                grad_color = (button_color[0], grad_value, button_color[2])
+                pygame.draw.line(self.screen, grad_color, 
+                            (button.left, y_pos + i), 
+                            (button.right, y_pos + i))
+            
+            # Vẽ viền và hiệu ứng sáng
+            pygame.draw.rect(self.screen, (255, 255, 255, 50), button, 1, border_radius=3)
+            
+            if is_hover:
+                # Hiệu ứng sáng khi hover
+                for i in range(3):
+                    glow_rect = button.inflate(i*4, i*4)
+                    pygame.draw.rect(self.screen, (255, 255, 255, 50-i*15), 
+                                glow_rect, 1, border_radius=3+i)
+            
+            # Vẽ văn bản
+            button_font = pygame.font.SysFont('Segoe UI', 24, bold=True)
+            text_surf = button_font.render(text, True, (255, 255, 255))
+            self.screen.blit(text_surf, (
+                button.centerx - text_surf.get_width()//2,
+                button.centery - text_surf.get_height()//2
+            ))
+        
+        # Vẽ version và credits
+        version_font = pygame.font.SysFont('Segoe UI', 16)
+        version_text = version_font.render("Version 2.0", True, (180, 180, 180))
+        self.screen.blit(version_text, (20, self.height - 40))
+        
+        # Trang trí thêm các icon cờ
+        icon_font = pygame.font.SysFont('Segoe UI Symbol', 36)
+        chess_icons = ["♔", "♕", "♖", "♗", "♘", "♙"]
+        for i, icon in enumerate(chess_icons):
+            icon_color = (255, 255, 255) if i % 2 == 0 else (50, 50, 50)
+            icon_surf = icon_font.render(icon, True, icon_color)
+            x_pos = self.width//2 - 150 + i * 60
+            self.screen.blit(icon_surf, (x_pos, self.height - 80))
+        
         return pvp_button, pve_button
     
     def draw_game_over_screen(self):
         """Hiển thị màn hình kết thúc game"""
-        # Tạo overlay mờ
+        # Tạo overlay gradient
         overlay = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, 160))  # RGBA, mờ 60%
+        for y in range(self.height):
+            alpha = 180 + int(50 * (y / self.height))  # Alpha tăng dần từ trên xuống
+            color = (10, 10, 30, alpha)
+            pygame.draw.line(overlay, color, (0, y), (self.width, y))
         self.screen.blit(overlay, (0, 0))
         
-        # Tạo khung thông báo
-        box_width = 500
-        box_height = 300
+        # Tạo khung thông báo với hiệu ứng ánh sáng
+        box_width = 600
+        box_height = 350
         box_rect = pygame.Rect((self.width - box_width) // 2, (self.height - box_height) // 2, 
                             box_width, box_height)
         
         # Vẽ khung với gradient
-        pygame.draw.rect(self.screen, (30, 30, 60), box_rect)
+        for y in range(box_rect.height):
+            color_value = 40 + int(20 * (y / box_rect.height))
+            line_color = (color_value, color_value, color_value + 10)
+            pygame.draw.line(self.screen, line_color,
+                        (box_rect.left, box_rect.top + y),
+                        (box_rect.right, box_rect.top + y))
         
-        # Viền khung
-        pygame.draw.rect(self.screen, (200, 200, 255), box_rect, 3)
+        # Viền 
+        pygame.draw.rect(self.screen, (212, 175, 55), box_rect, 3)  # Viền vàng
+        
+        # Thêm hiệu ứng ánh sáng
+        for i in range(3):
+            light_rect = box_rect.inflate(i*8, i*8)
+            pygame.draw.rect(self.screen, (255, 215, 0, 100-i*30), light_rect, 2)
         
         # Xác định thông điệp kết thúc
         game_state = self.game.get_state()
         if game_state == GameState.CHECKMATE:
-            winner = "TRẮNG" if not self.game.current_player else "ĐEN"
-            message = f"{winner} THẮNG! - CHIẾU BÍ!"
+            winner = "WHITE" if not self.game.current_player else "BLACK"
+            message = f"{winner} WINS!"
+            sub_message = "CHECKMATE"
             color = (255, 215, 0)  # Màu vàng
         elif game_state == GameState.STALEMATE:
-            message = "HÒA CỜ - BẾ TẮC"
+            message = "DRAW"
+            sub_message = "STALEMATE"
             color = (200, 200, 200)
         else:
-            message = "HÒA CỜ"
+            message = "DRAW"
+            sub_message = ""
             color = (200, 200, 200)
         
         # Vẽ tiêu đề
-        title_font = pygame.font.SysFont('Arial', 36, bold=True)
-        game_over_text = title_font.render("KẾT THÚC GAME", True, (255, 255, 255))
+        title_font = pygame.font.SysFont('Segoe UI', 48, bold=True)
+        game_over_text = title_font.render("GAME OVER", True, (255, 255, 255))
+        
+        # Hiệu ứng bóng đổ cho văn bản
+        shadow_text = title_font.render("GAME OVER", True, (0, 0, 0))
+        self.screen.blit(shadow_text, (self.width // 2 - game_over_text.get_width() // 2 + 3, 
+                                    box_rect.y + 40 + 3))
         self.screen.blit(game_over_text, (self.width // 2 - game_over_text.get_width() // 2, 
                                         box_rect.y + 40))
         
         # Vẽ kết quả
-        result_font = pygame.font.SysFont('Arial', 28, bold=True)
+        result_font = pygame.font.SysFont('Segoe UI', 36, bold=True)
         result_text = result_font.render(message, True, color)
+        
+        # Hiệu ứng phát sáng cho kết quả
+        for i in range(3):
+            glow_text = result_font.render(message, True, (*color[:3], 50-i*15))
+            self.screen.blit(glow_text, (self.width // 2 - result_text.get_width() // 2 - i, 
+                                    box_rect.y + 120 - i))
+            self.screen.blit(glow_text, (self.width // 2 - result_text.get_width() // 2 + i, 
+                                    box_rect.y + 120 + i))
+        
         self.screen.blit(result_text, (self.width // 2 - result_text.get_width() // 2, 
-                                    box_rect.y + 100))
+                                    box_rect.y + 120))
         
-        # Vẽ hướng dẫn
-        guide_font = pygame.font.SysFont('Arial', 20)
+        # Vẽ thông điệp phụ
+        sub_font = pygame.font.SysFont('Segoe UI', 24)
+        sub_text = sub_font.render(sub_message, True, color)
+        self.screen.blit(sub_text, (self.width // 2 - sub_text.get_width() // 2, 
+                                box_rect.y + 170))
         
-        restart_text = guide_font.render("Nhấn R để chơi lại", True, (255, 255, 255))
+        # Vẽ hướng dẫn với hiệu ứng nhấp nháy
+        guide_font = pygame.font.SysFont('Segoe UI', 22)
+        
+        alpha = 155 + int(100 * abs(math.sin(pygame.time.get_ticks() / 500)))
+        restart_color = (255, 255, 255, alpha)
+        restart_text = guide_font.render("Press R to play again", True, restart_color)
         self.screen.blit(restart_text, (self.width // 2 - restart_text.get_width() // 2, 
-                                        box_rect.y + 180))
+                                    box_rect.y + 230))
         
-        menu_text = guide_font.render("Nhấn M để về Menu", True, (255, 255, 255))
+        menu_text = guide_font.render("Press M to return to Menu", True, (200, 200, 200))
         self.screen.blit(menu_text, (self.width // 2 - menu_text.get_width() // 2, 
-                                    box_rect.y + 220))
+                                box_rect.y + 270))
+        
+        # Vẽ các icon trang trí
+        icon_font = pygame.font.SysFont('Segoe UI Symbol', 36)
+        crown_icon = icon_font.render("♔", True, (255, 215, 0))
+        self.screen.blit(crown_icon, (box_rect.x + 50, box_rect.y + 40))
+        self.screen.blit(crown_icon, (box_rect.right - 80, box_rect.y + 40))
         
     def draw_game_info(self, screen, x, y):
         """Hiển thị thông tin cơ bản về game"""
@@ -1303,24 +1616,39 @@ class ChessUI:
     
     def draw_sidebar(self, screen):
         """Vẽ sidebar với tất cả các nút và thông tin"""
-        # Kích thước và vị trí sidebar
-        sidebar_rect = pygame.Rect(self.board_size, 0, self.width - self.board_size, self.height)
+        sidebar_rect = pygame.Rect(self.board_size + 20, 0, self.width - self.board_size - 20, self.height)
+    
+        # Gradient cho sidebar
+        for y in range(sidebar_rect.height):
+            # Tạo hiệu ứng gradient từ trên xuống
+            color_value = 60 + int(20 * (1 - y / sidebar_rect.height))
+            pygame.draw.line(screen, (color_value, color_value, color_value+20), 
+                        (sidebar_rect.left, y), (sidebar_rect.right, y))
         
-        # Vẽ nền sidebar với viền
-        pygame.draw.rect(screen, (240, 240, 240), sidebar_rect)
-        pygame.draw.rect(screen, (100, 100, 100), sidebar_rect, 2)
+        # Viền sang trọng
+        pygame.draw.rect(screen, (212, 175, 55), sidebar_rect, 2)  # Viền vàng
         
         # Vẽ tiêu đề
-        title_font = pygame.font.SysFont('Arial', 22, bold=True)
-        title_text = title_font.render("CHESS GAME", True, (0, 0, 100))
-        screen.blit(title_text, (self.board_size + (sidebar_rect.width - title_text.get_width()) // 2, 20))
+        title_font = pygame.font.SysFont('Segoe UI', 28, bold=True)
+        title = title_font.render("CHESS MASTER", True, (230, 230, 230))
         
-        # Vị trí bắt đầu vẽ các nút và thông tin
-        y_pos = 70
+        # Hiệu ứng bóng cho tiêu đề
+        title_shadow = title_font.render("CHESS MASTER", True, (20, 20, 20))
+        screen.blit(title_shadow, (sidebar_rect.centerx - title.get_width() // 2 + 2, 25 + 2))
+        screen.blit(title, (sidebar_rect.centerx - title.get_width() // 2, 25))
         
-        # ===== 1. Thông tin game =====
-        self.draw_game_info(screen, self.board_size + 20, y_pos)
-        y_pos += 80
+        # Vẽ đường kẻ ngăn cách
+        separator_y = 70
+        pygame.draw.line(screen, (212, 175, 55), 
+                    (sidebar_rect.left + 20, separator_y),
+                    (sidebar_rect.right - 20, separator_y), 2)
+        
+        # Các thành phần tiếp theo với vị trí tính từ separator_y
+        y_pos = separator_y + 20
+        
+        # Vẽ các thành phần sidebar
+        self.draw_game_info(screen, sidebar_rect.left + 20, y_pos)
+        y_pos += 100
         
         # ===== 2. Nút bật/tắt học tập AI =====
         if self.game.game_mode == "pve" and hasattr(self.ai, 'learning_enabled'):
@@ -1342,85 +1670,158 @@ class ChessUI:
         y_pos += 150
         
         # ===== 6. Lịch sử các nước đi =====
-        self.draw_move_history(screen, self.board_size + 20, y_pos)
-        y_pos += 120
+        # Increase available space for move history
+        available_space = self.height - self.status_height - 110 - y_pos
+        
+        # Nếu không gian đủ lớn, hiển thị lịch sử
+        if available_space >= 120:
+            self.draw_move_history(screen, self.board_size + 20, y_pos)
+            y_pos += 120
+        else:
+            # Hiển thị lịch sử với kích thước nhỏ hơn
+            self.draw_move_history(screen, self.board_size + 20, y_pos)
+            y_pos += min(available_space - 10, 100)
         
         # ===== 7. Các nút điều khiển game =====
-        self.draw_game_controls(screen, self.board_size + 20, y_pos)
+        # Place controls at the bottom of sidebar, just above status bar
+        controls_y = self.height - self.status_height - 50
+        self.draw_game_controls(screen, self.board_size + 20, controls_y)
     
     def draw_game_controls(self, screen, x, y):
-        """Vẽ các nút điều khiển game"""
-        # Các nút cần vẽ
+        """Vẽ thanh công cụ điều khiển game với giao diện tối giản và hiệu quả"""
+        # Kích thước nhỏ gọn hơn cho thanh công cụ
+        taskbar_width = 260
+        taskbar_height = 40
+        
+        # Định vị taskbar ở chính giữa sidebar
+        sidebar_width = self.width - self.board_size - 20
+        taskbar_x = self.board_size + (sidebar_width - taskbar_width) // 2
+        
+        # Vẽ nền thanh công cụ với gradient đơn giản
+        taskbar_rect = pygame.Rect(taskbar_x, y, taskbar_width, taskbar_height)
+        
+        # Gradient nhẹ từ xám đậm đến xám nhạt
+        for i in range(taskbar_height):
+            ratio = i / taskbar_height
+            r = int(60 + ratio * 30)
+            g = int(70 + ratio * 30)
+            b = int(90 + ratio * 30)
+            pygame.draw.line(screen, (r, g, b), 
+                          (taskbar_x, y + i), 
+                          (taskbar_x + taskbar_width, y + i))
+        
+        # Viền đơn giản
+        pygame.draw.rect(screen, (150, 150, 150), taskbar_rect, 1, border_radius=6)
+        
+        # Định nghĩa các nút điều khiển
         buttons = [
-            {"text": "GỢI Ý", "rect": None, "color": (80, 150, 220), "attr": "hint_button_rect"},
-            {"text": "ĐI LẠI", "rect": None, "color": (220, 150, 80), "attr": "undo_button_rect"},
-            {"text": "RESET", "rect": None, "color": (150, 80, 220), "attr": "reset_button_rect"}
+            {"text": "HINT", "color": (41, 128, 185), "attr": "hint_button_rect", "action": self.show_hint},
+            {"text": "UNDO", "color": (230, 126, 34), "attr": "undo_button_rect", "action": self.undo_move},
+            {"text": "RESET", "color": (155, 89, 182), "attr": "reset_button_rect", "action": self.reset_game}
         ]
         
-        button_width = 60
-        button_height = 30
-        button_spacing = 10
+        # Tính toán kích thước nút - nhỏ gọn và cân đối
+        button_count = len(buttons)
+        button_width = taskbar_width / button_count - 10  # Margin between buttons
+        button_height = taskbar_height - 10  # Padding top and bottom
         
-        # Vẽ từng nút
+        # Kiểm tra chuột
+        mouse_pos = pygame.mouse.get_pos()
+        
+        # Vẽ các nút cạnh nhau, cân đối
         for i, btn in enumerate(buttons):
-            btn_x = x + i * (button_width + button_spacing)
-            btn_rect = pygame.Rect(btn_x, y, button_width, button_height)
+            # Position buttons evenly
+            btn_x = taskbar_x + 5 + i * (button_width + 5)
+            btn_y = y + 5
+            btn_rect = pygame.Rect(btn_x, btn_y, button_width, button_height)
             
-            # Vẽ nút với gradient
-            pygame.draw.rect(screen, btn["color"], btn_rect)
+            # Check if mouse is over button
+            is_hovered = btn_rect.collidepoint(mouse_pos)
             
-            # Hiệu ứng gradient
-            gradient = pygame.Surface((btn_rect.width, btn_rect.height), pygame.SRCALPHA)
-            pygame.draw.rect(gradient, (255, 255, 255, 50), (0, 0, btn_rect.width, btn_rect.height//2))
-            screen.blit(gradient, btn_rect)
+            # Darker shade for hover state
+            color = btn["color"]
+            base_color = (color[0] * 0.9, color[1] * 0.9, color[2] * 0.9)
+            if is_hovered:
+                base_color = color
             
-            # Viền nút
-            pygame.draw.rect(screen, (50, 50, 50), btn_rect, 1)
+            # Draw button with rounded corners
+            pygame.draw.rect(screen, base_color, btn_rect, border_radius=5)
             
-            # Vẽ văn bản
-            font = pygame.font.SysFont('Arial', 12, bold=True)
+            # Simple highlight effect on top edge
+            highlight = pygame.Rect(btn_rect.x, btn_rect.y, btn_rect.width, 1)
+            pygame.draw.rect(screen, (255, 255, 255, 100), highlight)
+            
+            # Draw centered text with shadow
+            font = pygame.font.SysFont('Arial', 14, bold=True)
             text = font.render(btn["text"], True, (255, 255, 255))
             text_rect = text.get_rect(center=btn_rect.center)
+            
+            # Shadow
+            shadow_rect = text_rect.copy()
+            shadow_rect.x += 1
+            shadow_rect.y += 1
+            shadow_text = font.render(btn["text"], True, (0, 0, 0, 120))
+            screen.blit(shadow_text, shadow_rect)
+            
+            # Text
             screen.blit(text, text_rect)
             
-            # Lưu lại vị trí nút
+            # Store button rect for event handling
             setattr(self, btn["attr"], btn_rect)
 
     def draw_move_history(self, screen, x, y):
-        """Hiển thị lịch sử các nước đi"""
-        # Tiêu đề
+        """Hiển thị lịch sử các nước đi với giao diện cải tiến"""
+        # Vẽ tiêu đề
         font_title = pygame.font.SysFont('Arial', 16, bold=True)
-        title = font_title.render("LỊCH SỬ NƯỚC ĐI", True, (50, 50, 100))
+        title = font_title.render("MOVE HISTORY", True, (50, 50, 120))
         screen.blit(title, (x, y))
         
-        # Vẽ khung chứa
-        history_rect = pygame.Rect(x, y + 25, 200, 80)
-        pygame.draw.rect(screen, (245, 245, 245), history_rect)
-        pygame.draw.rect(screen, (180, 180, 180), history_rect, 1)
+        # Tính toán kích thước container phù hợp
+        history_width = 260
+        history_height = 80
+        history_rect = pygame.Rect(x, y + 25, history_width, history_height)
+        
+        # Vẽ nền gradient cho container
+        for i in range(history_height):
+            ratio = i / history_height
+            r = int(245 - ratio * 10)
+            g = int(245 - ratio * 10)
+            b = int(245 - ratio * 5)
+            pygame.draw.line(screen, (r, g, b), 
+                          (x, y + 25 + i), 
+                          (x + history_width, y + 25 + i))
+        
+        # Vẽ viền cho container
+        pygame.draw.rect(screen, (180, 180, 200), history_rect, 1)
         
         # Hiển thị lịch sử nước đi
         if not hasattr(self.game, 'move_history') or not self.game.move_history:
-            empty_text = pygame.font.SysFont('Arial', 12).render("Chưa có nước đi nào", True, (100, 100, 100))
-            screen.blit(empty_text, (x + 10, y + 60))
+            # Trường hợp chưa có nước đi nào
+            empty_text = pygame.font.SysFont('Arial', 12).render("No moves yet", True, (100, 100, 120))
+            screen.blit(empty_text, (x + history_width//2 - empty_text.get_width()//2, 
+                                   y + 25 + history_height//2 - empty_text.get_height()//2))
             return
         
         # Hiển thị lịch sử
         font = pygame.font.SysFont('Arial', 12)
-        moves_per_row = 4
-        y_offset = y + 35
+        moves_per_row = 3  # Giảm xuống để tăng khả năng đọc
+        y_offset = y + 30
         line_height = 18
         
-        # Hiển thị tối đa 8 nước đi gần nhất
-        start_idx = max(0, len(self.game.move_history) - 8)
+        # Hiển thị tối đa 6 nước đi gần nhất
+        start_idx = max(0, len(self.game.move_history) - 6)
         for i in range(start_idx, len(self.game.move_history)):
             move = self.game.move_history[i]
             move_num = i + 1
             row = (i - start_idx) // moves_per_row
             col = (i - start_idx) % moves_per_row
             
+            # Format nước đi với màu sắc tương ứng
+            color = (0, 100, 0) if i % 2 == 0 else (150, 0, 0)  # Xanh cho quân trắng, đỏ cho quân đen
+            
             move_text = f"{move_num}.{move}"
-            text = font.render(move_text, True, (0, 0, 0))
-            screen.blit(text, (x + 10 + col * 50, y_offset + row * line_height))
+            text = font.render(move_text, True, color)
+            screen.blit(text, (x + 15 + col * 85, y_offset + row * line_height))
 
     def show_message(self, message, duration=3000):
         """Hiển thị thông báo trên màn hình"""
@@ -1447,40 +1848,40 @@ class ChessUI:
             screen.blit(highlight, (file * self.square_size, (7 - rank) * self.square_size))
     
     def draw_learning_toggle(self, screen, x, y):
-        """Vẽ nút bật/tắt chế độ học tập của AI"""
-        # Tiêu đề
+        """Draw AI learning mode toggle button"""
+        # Title
         font_title = pygame.font.SysFont('Arial', 16, bold=True)
-        title = font_title.render("Chế độ học tập", True, (50, 50, 100))
+        title = font_title.render("Learning Mode", True, (50, 50, 100))
         screen.blit(title, (x, y))
         
-        # Vẽ nút bật/tắt
+        # Draw toggle button
         button_rect = pygame.Rect(x, y + 25, 200, 30)
         button_color = (0, 180, 0) if self.ai.learning_enabled else (180, 0, 0)
         
-        # Vẽ nút với viền và hiệu ứng 3D
+        # Draw button with border and 3D effect
         pygame.draw.rect(screen, button_color, button_rect)
-        pygame.draw.rect(screen, (255, 255, 255), button_rect.inflate(-4, -4), 1)  # Viền trong
-        pygame.draw.rect(screen, (50, 50, 50), button_rect, 1)  # Viền ngoài
+        pygame.draw.rect(screen, (255, 255, 255), button_rect.inflate(-4, -4), 1)  # Inner border
+        pygame.draw.rect(screen, (50, 50, 50), button_rect, 1)  # Outer border
         
-        # Vẽ văn bản trên nút
+        # Draw button text
         font = pygame.font.SysFont('Arial', 14, bold=True)
-        text = font.render("BẬT" if self.ai.learning_enabled else "TẮT", True, (255, 255, 255))
+        text = font.render("ON" if self.ai.learning_enabled else "OFF", True, (255, 255, 255))
         text_rect = text.get_rect(center=button_rect.center)
         screen.blit(text, text_rect)
         
-        # Lưu lại vị trí nút để xử lý sự kiện click
+        # Store button position for click handling
         self.learning_toggle_rect = button_rect
 
     def draw_game_state(self, screen, state):
-        """Vẽ trạng thái game"""
+        """Draw game state"""
         message = ""
         if state == GameState.CHECKMATE:
-            winner = "Trắng" if not self.game.current_player else "Đen"
-            message = f"{winner} thắng! - Chiếu bí!"
+            winner = "White" if not self.game.current_player else "Black"
+            message = f"{winner} wins! - Checkmate!"
         elif state == GameState.STALEMATE:
-            message = "Hòa cờ - Bất phân thắng bại"
+            message = "Draw - Stalemate"
         else:
-            message = "Hòa cờ"
+            message = "Draw"
         
         font = pygame.font.SysFont('Arial', 24)
         text = font.render(message, True, (200, 0, 0))
