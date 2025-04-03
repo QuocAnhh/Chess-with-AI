@@ -3,11 +3,11 @@
 ![Chess Game](https://img.shields.io/badge/Chess-AI-brightgreen)
 ![Status](https://img.shields.io/badge/Status-Active-success)
 
-Một ứng dụng cờ vua với trí tuệ nhân tạo, cho phép người dùng chơi cờ với máy tính ở nhiều cấp độ khác nhau.
+Một ứng dụng cờ vua với AI, cho phép người dùng chơi cờ với máy tính ở nhiều cấp độ khác nhau.
 
 ![Chess Game Preview](assets/preview.png)
 
-## 📋 Tính năng
+## Tính năng
 
 - Giao diện đồ họa trực quan của bàn cờ vua
 - Chơi với AI ở nhiều cấp độ khó khác nhau
@@ -20,7 +20,7 @@ Một ứng dụng cờ vua với trí tuệ nhân tạo, cho phép người dù
 - Lưu và tải các ván cờ
 - Hiển thị lịch sử các nước đi
 
-## 🚀 Cài đặt
+## Cài đặt
 
 ### Yêu cầu hệ thống
 - Python 3.11.6 trở lên
@@ -53,16 +53,16 @@ python main.py
 - Nhấn `P` để tạm dừng game
 - Nhấn `M` để quay về menu chính
 
-## 🧠 Thuật toán AI
+## Thuật toán 
 
 Dự án sử dụng thuật toán Minimax với cắt tỉa Alpha-Beta để điều khiển AI. Các cấp độ khó khác nhau được thực hiện bằng cách thay đổi độ sâu tìm kiếm của thuật toán.
 
-## 💻 Công nghệ sử dụng
+## Công nghệ sử dụng
 
 - Python
 - Pygame cho giao diện đồ họa
 
-## 🔄 Cấu trúc dự án
+## Cấu trúc dự án
 
 ```
 Chess-with-AI/
@@ -75,7 +75,7 @@ Chess-with-AI/
 └── requirements.txt   # Các thư viện phụ thuộc
 ```
 
-## 🤝 Đóng góp
+## Đóng góp
 
 Dự án vẫn đang trong giai đoạn hoàn thiện, vậy nên mọi đóng góp của mọi người đều rất đáng giá và hoan nghênh! Nếu mọi người muốn đóng góp vào dự án, hãy làm theo các bước sau:
 
@@ -86,7 +86,7 @@ Dự án vẫn đang trong giai đoạn hoàn thiện, vậy nên mọi đóng g
 5. Mở Pull Request
 
 
-## 📧 Liên hệ
+## Liên hệ
 
 Github - [GitHub](https://github.com/QuocAnhh)
 
