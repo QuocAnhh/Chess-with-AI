@@ -38,7 +38,7 @@ cd Chess-with-AI
 pip install -r requirements.txt
 ```
 
-## 🎮 Cách sử dụng
+## Cách sử dụng
 
 Chạy chương trình với lệnh:
 ```
