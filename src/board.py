@@ -19,7 +19,7 @@ class ChessBoard:
         return self.board.is_game_over()
     
     def get_game_result(self):
-        if not self.is_game_over():
+        if not self.is_game_over(): 
             return None
         if self.board.is_checkmate():
             return "checkmate"

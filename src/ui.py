@@ -22,30 +22,24 @@ class ChessUI:
         self.learning_toggle_rect = None
         
 
-        # Chiều cao của thanh trạng thái
-        self.status_height = 50  # Tăng chiều cao thanh trạng thái để hiển thị đầy đủ thông tin
+        self.status_height = 50  
         
-        # Kích thước cơ bản
-        self.square_size = 80  # Kích thước mỗi ô cờ
-        self.board_size = self.square_size * 8  # Kích thước bàn cờ (640px)
+        self.square_size = 80  
+        self.board_size = self.square_size * 8  
         
         sidebar_width = 300
         
-        # Tính toán kích thước cửa sổ TỔNG THỂ
         self.width = self.board_size + sidebar_width  # 640px + 300px = 940px
         self.height = self.board_size + self.status_height  # 640px + 40px = 680px
         
-        # Tạo cửa sổ với kích thước đã tính toán
         self.screen = pygame.display.set_mode((self.width, self.height))
         self.clock = pygame.time.Clock()
         
-        # Sử dụng font hỗ trợ Unicode
         try:
-            # Thử tìm font trong hệ thống hỗ trợ tiếng Việt
+            # thử tìm font trong hệ thống hỗ trợ tiếng Việt
             available_fonts = pygame.font.get_fonts()
             unicode_fonts = ['arial', 'segoeui', 'timesnewroman', 'dejavusans', 'freesans']
         
-            # Tìm font phù hợp từ danh sách
             font_name = None
             for f in unicode_fonts:
                 if f.lower().replace(' ', '') in available_fonts:
@@ -57,7 +51,6 @@ class ChessUI:
                 self.font = pygame.font.SysFont(font_name, 28)
                 self.small_font = pygame.font.SysFont(font_name, 20)
             else:
-                # Nếu không tìm thấy font hỗ trợ, sử dụng font mặc định
                 print("Không tìm thấy font Unicode, sử dụng font mặc định")
                 self.font = pygame.font.SysFont(None, 28)
                 self.small_font = pygame.font.SysFont(None, 20)
@@ -74,15 +67,14 @@ class ChessUI:
 
         self.WHITE_SQUARE = (240, 217, 181)
         self.BLACK_SQUARE = (181, 136, 99)
-        self.HIGHLIGHT_COLOR = (124, 252, 0, 128)  # Màu highlight nước đi hợp lệ
-        self.SELECT_COLOR = (255, 255, 0, 128)     # Màu quân cờ được chọn
+        self.HIGHLIGHT_COLOR = (124, 252, 0, 128)  
+        self.SELECT_COLOR = (255, 255, 0, 128)    
 
         self.selected_square = None
         self.legal_moves = []
         self.game_over = False
         self.promotion_choice = None
         
-        # Tạo game và AI
         if game:
             self.game = game
         else:
@@ -93,7 +85,6 @@ class ChessUI:
         else:
             self.ai = ChessAI(difficulty=2)
             
-        # Kết hợp AI với game
         self.game.ai = self.ai
             
         self.sound_on = True
@@ -102,19 +93,18 @@ class ChessUI:
         if hasattr(self.game, 'mode'):
             print(f"Khởi tạo UI với chế độ game: {self.game.mode}")
         
-        # Biến trạng thái cho menu
         self.in_menu = True
         
-        # Định nghĩa font chữ cho thanh trạng thái
         self.status_font = pygame.font.SysFont('Arial', 20)
         
     def game_over_action(self):
         '''Các hành động khi kết thúc game'''
+
         # Đặt cờ game_over để ngăn vòng lặp vô hạn
         self.game_over = True
         
         try:
-            # Giới hạn thời gian học tập
+            # limit thời gian học tập
             if hasattr(self.ai, 'learning_enabled') and self.ai.learning_enabled:
                 print("Đang xử lý học tập sau khi game kết thúc...")
                 import threading
@@ -125,7 +115,7 @@ class ChessUI:
                     except Exception as e:
                         print(f"Lỗi học tập: {e}")
                 
-                # Học trong thread riêng với timeout
+                # học trong thread riêng với timeout
                 learn_thread = threading.Thread(target=learn_with_timeout)
                 learn_thread.daemon = True 
                 learn_thread.start()
@@ -133,10 +123,8 @@ class ChessUI:
         except Exception as e:
             print(f"Lỗi xử lý game over: {e}")
 
-        # Lấy trạng thái game
         state = self.game.get_state()
         
-        # Hiển thị thông báo phù hợp với từng trạng thái
         if state == GameState.CHECKMATE:
             winner = 'White' if not self.game.current_player else 'Black'
             self.show_message(f'{winner} wins!')
@@ -146,18 +134,15 @@ class ChessUI:
         else:
             self.show_message('Draw!') 
         
-        # Đảm bảo màn hình kết thúc game được hiển thị
         self.render(self.screen)
 
     def draw_background(self, screen):
         """Tạo nền gradient cho giao diện"""
-        color1 = (220, 240, 255)  # Xanh nhạt
-        color2 = (240, 240, 240)  # Trắng
+        color1 = (220, 240, 255)  
+        color2 = (240, 240, 240)  
         
-        # Vẽ gradient dọc
         height = screen.get_height()
         for y in range(height):
-            # Tính toán màu cho từng dòng
             ratio = y / height
             r = int(color1[0] * (1 - ratio) + color2[0] * ratio)
             g = int(color1[1] * (1 - ratio) + color2[1] * ratio)
@@ -169,13 +154,10 @@ class ChessUI:
         """Vẽ toàn bộ giao diện"""
         screen.fill((240, 240, 240))
         
-        # Vẽ bàn cờ
         self.draw_board(screen)
         
-        # Vẽ quân cờ
         self.draw_pieces(screen)
         
-        # Vẽ nước đi hợp lệ nếu đã chọn quân
         if hasattr(self, 'selected_square') and self.selected_square is not None:
             if hasattr(self, 'legal_moves') and self.legal_moves:
                 self.draw_legal_moves(screen)
@@ -190,47 +172,37 @@ class ChessUI:
 
     def draw_board(self, screen):
         """Vẽ bàn cờ vua với hai màu xen kẽ"""
-        light_square = (240, 217, 181)  # Màu sáng (be nhạt)
-        dark_square = (181, 136, 99)    # Màu tối (nâu)
+        light_square = (240, 217, 181)  
+        dark_square = (181, 136, 99)   
         
-        # Kích thước mỗi ô vuông
         square_size = self.square_size
         
-        # Vẽ các ô vuông
         for row in range(8):
             for col in range(8):
-                # Xác định màu ô (xen kẽ)
                 color = light_square if (row + col) % 2 == 0 else dark_square
                 
-                # Vẽ ô vuông
                 square_rect = pygame.Rect(col * square_size, row * square_size, 
                                         square_size, square_size)
                 pygame.draw.rect(screen, color, square_rect)
         
-        # Vẽ viền bàn cờ
         board_rect = pygame.Rect(0, 0, 8 * square_size, 8 * square_size)
         pygame.draw.rect(screen, (0, 0, 0), board_rect, 2)
         
-        # Vẽ tọa độ bàn cờ (a-h, 1-8)
         font = pygame.font.SysFont('Arial', 12)
         
-        # Chữ cái (a-h) cho cột
         for col in range(8):
             label = chr(ord('a') + col)
             text = font.render(label, True, (0, 0, 0))
             
-            # Đặt tọa độ ở dưới cùng của cột
             x = col * square_size + square_size // 2 - text.get_width() // 2
             y = 8 * square_size - 15
             
             screen.blit(text, (x, y))
         
-        # Số (1-8) cho hàng
         for row in range(8):
             label = str(8 - row)
             text = font.render(label, True, (0, 0, 0))
             
-            # Đặt tọa độ ở bên phải của hàng
             x = 8 * square_size - 15
             y = row * square_size + square_size // 2 - text.get_height() // 2
             
@@ -241,11 +213,9 @@ class ChessUI:
         if self.selected_square is None:
             return
             
-        # Tính toán vị trí pixel của ô được chọn
         file = chess.square_file(self.selected_square)
         rank = 7 - chess.square_rank(self.selected_square)
         
-        # Vẽ viền nhấn mạnh cho ô được chọn
         square_rect = pygame.Rect(file * self.square_size, rank * self.square_size,
                                 self.square_size, self.square_size)
         pygame.draw.rect(screen, (255, 255, 0), square_rect, 3)
@@ -258,32 +228,26 @@ class ChessUI:
         if not hasattr(self, 'piece_images') or not self.piece_images:
             self.load_pieces()
         
-        # Kích thước mỗi ô vuông
         square_size = self.square_size
         
-        # Duyệt qua toàn bộ bàn cờ
         for square in chess.SQUARES:
             piece = self.game.board.piece_at(square)
             if not piece:
                 continue
                 
-            # Tính toán vị trí pixel
             file = chess.square_file(square)
             rank = 7 - chess.square_rank(square)
             
             x = file * square_size
             y = rank * square_size
             
-            # Xác định hình ảnh quân cờ
             color = "w" if piece.color else "b"
             piece_type = chess.piece_symbol(piece.piece_type).lower()
             piece_key = color + piece_type
             
             if piece_key in self.piece_images:
-                # Vẽ quân cờ
                 piece_img = self.piece_images[piece_key]
                 
-                # Tính vị trí để quân cờ nằm giữa ô
                 piece_x = x + (square_size - piece_img.get_width()) // 2
                 piece_y = y + (square_size - piece_img.get_height()) // 2
                 
@@ -291,13 +255,10 @@ class ChessUI:
             else:
                 print(f"Không tìm thấy hình ảnh cho quân cờ: {piece_key}")
         
-        # Hiển thị thông báo AI đang suy nghĩ nếu đang trong trạng thái đó
         if hasattr(self.game, 'ai_thinking') and self.game.ai_thinking:
-            # Tạo hiệu ứng mờ
             overlay = pygame.Surface((self.board_size, 60), pygame.SRCALPHA)
             overlay.fill((0, 0, 0, 160))  # Nền đen mờ
             
-            # Vị trí hiển thị thông báo
             screen.blit(overlay, (0, self.board_size // 2 - 30))
             
             font = pygame.font.SysFont('Arial', 24, bold=True)
@@ -307,17 +268,13 @@ class ChessUI:
 
     def draw_legal_moves(self, screen):
         """Hiển thị các nước đi hợp lệ cho quân cờ đã chọn"""
-        # Màu hiển thị cho nước đi hợp lệ
         move_color = (0, 255, 0, 100)  # Xanh lá mờ
         capture_color = (255, 0, 0, 120)  # Đỏ mờ
         
-        # Vẽ dấu hiệu cho từng nước đi hợp lệ
         for move in self.legal_moves:
-            # Lấy tọa độ đích
             file = chess.square_file(move.to_square)
             rank = 7 - chess.square_rank(move.to_square)
             
-            # Tính toán vị trí pixel
             x = file * self.square_size
             y = rank * self.square_size
             
@@ -416,7 +373,7 @@ class ChessUI:
         self.selected_square = None
         self.legal_moves = []
         self.game_over = False
-        print(f"Đã tạo game mới với chế độ: {mode}")  # Thêm debug
+        print(f"Đã tạo game mới với chế độ: {mode}")  
     
     def handle_event(self, event):
         """Xử lý tất cả các sự kiện từ người dùng"""
@@ -426,18 +383,17 @@ class ChessUI:
         # Xử lý khi game over
         if self.game_over:
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_r:  # Phím R - chơi lại
+                if event.key == pygame.K_r: 
                     self.reset_game()
                     self.game_over = False
                     return True
-                elif event.key == pygame.K_m:  # Phím M - về menu
+                elif event.key == pygame.K_m: 
                     self.in_menu = True
                     self.game_over = False
                     return True
             return True
             
         if event.type == pygame.MOUSEBUTTONDOWN:
-            # Xử lý click vào các nút
             
             # Nút học tập
             if hasattr(self, 'learning_toggle_rect') and self.learning_toggle_rect.collidepoint(event.pos):
@@ -466,12 +422,10 @@ class ChessUI:
                 self.reset_game()
                 return True
                 
-            # Xử lý click vào bàn cờ nếu game chưa kết thúc
             if not self.game.is_game_over() and event.pos[0] < self.board_size and event.pos[1] < self.board_size:
                 self.handle_click(event.pos)
                 return True
         
-        # Xử lý phím tắt
         if event.type == pygame.KEYDOWN:
             # R: Reset game
             if event.key == pygame.K_r:
@@ -514,10 +468,8 @@ class ChessUI:
 
     def show_promotion_dialog(self):
         """Hiển thị hộp thoại để chọn quân phong cấp"""
-        # Lưu trạng thái hiện tại của bàn cờ
         screen_copy = pygame.display.get_surface().copy()
         
-        # Tạo dialog
         dialog_width, dialog_height = 300, 120
         screen_width, screen_height = pygame.display.get_surface().get_size()
         
@@ -526,15 +478,12 @@ class ChessUI:
         
         dialog_rect = pygame.Rect(dialog_x, dialog_y, dialog_width, dialog_height)
         
-        # Các quân có thể phong cấp
         promotion_pieces = [chess.QUEEN, chess.ROOK, chess.BISHOP, chess.KNIGHT]
         piece_names = ["Hậu", "Xe", "Tượng", "Mã"]
         
-        # Tạo font
         font = pygame.font.SysFont('Arial', 24)
         title_text = font.render("Chọn quân phong cấp:", True, (0, 0, 0))
         
-        # Tạo các nút chọn
         button_width = 60
         button_height = 60
         button_spacing = 10
@@ -543,25 +492,20 @@ class ChessUI:
         button_start_x = dialog_x + (dialog_width - buttons_total_width) // 2
         button_y = dialog_y + title_text.get_height() + 10
         
-        # Vòng lặp hiển thị dialog
         chosen_piece = None
         running = True
         
         while running:
-            # Vẽ overlay tối
             overlay = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA)
             overlay.fill((0, 0, 0, 128))  # RGBA, alpha=128 cho hiệu ứng mờ
             pygame.display.get_surface().blit(overlay, (0, 0))
             
-            # Vẽ dialog
             pygame.draw.rect(pygame.display.get_surface(), (240, 240, 240), dialog_rect)
             pygame.draw.rect(pygame.display.get_surface(), (0, 0, 0), dialog_rect, 2)
             
-            # Vẽ tiêu đề
             pygame.display.get_surface().blit(title_text, 
                                             (dialog_x + (dialog_width - title_text.get_width()) // 2, dialog_y + 10))
             
-            # Vẽ các nút chọn quân
             for i, (piece, name) in enumerate(zip(promotion_pieces, piece_names)):
                 button_x = button_start_x + i * (button_width + button_spacing)
                 button_rect = pygame.Rect(button_x, button_y, button_width, button_height)
@@ -614,7 +558,6 @@ class ChessUI:
                         # Hủy phong cấp
                         running = False
             
-        # Khôi phục màn hình
         pygame.display.get_surface().blit(screen_copy, (0, 0))
         
         return chosen_piece
@@ -627,7 +570,6 @@ class ChessUI:
             self.game.move_history.pop()
             self.game.current_player = not self.game.current_player
             
-            # Trong chế độ PvE, đi lại cả nước của máy
             if self.game.game_mode == "pve" and len(self.game.move_history) > 0:
                 self.game.board.pop()
                 self.game.move_history.pop()
@@ -644,17 +586,14 @@ class ChessUI:
     def reset_game(self):
         """Khởi động lại game"""
         try:
-            # Xác định chế độ game hiện tại
             current_mode = "pvp"
             if hasattr(self.game, 'game_mode'):
                 current_mode = self.game.game_mode
             
-            # Xác định độ khó nếu có
             difficulty = 2
             if hasattr(self.game, 'ai') and hasattr(self.game.ai, 'difficulty'):
                 difficulty = self.game.ai.difficulty
             
-            # Tạo game mới với cùng cài đặt
             self.game = ChessGame()
             if current_mode == "pve":
                 self.game.game_mode = "pve"
@@ -669,7 +608,6 @@ class ChessUI:
             self.legal_moves = []
             self.game_over = False
             
-            # Phát âm thanh nếu có
             if hasattr(self, 'new_game_sound') and hasattr(self, 'sound_on') and self.sound_on:
                 self.new_game_sound.play()
                 
@@ -682,17 +620,14 @@ class ChessUI:
         # Lấy thông tin từ AI
         stats = self.ai.get_learning_stats()
         
-        # Vẽ khung thông tin
         stats_rect = pygame.Rect(x, y, 200, 130)
         pygame.draw.rect(screen, (240, 240, 255), stats_rect)
         pygame.draw.rect(screen, (100, 100, 150), stats_rect, 1)
         
-        # Vẽ tiêu đề
         font_title = pygame.font.SysFont('Arial', 16, bold=True)
         title = font_title.render("THỐNG KÊ AI", True, (0, 0, 100))
         screen.blit(title, (x + 10, y + 10))
         
-        # Vẽ các thông tin
         font = pygame.font.SysFont('Arial', 12)
         y_offset = y + 35
         line_height = 20
@@ -730,26 +665,21 @@ class ChessUI:
             return
         
         try:
-            # Sử dụng AI để tìm nước đi gợi ý
             if hasattr(self.game, 'ai') and self.game.ai:
                 current_player = self.game.current_player
-                # Lấy nước đi gợi ý từ AI
                 move = self.game.ai.get_move(self.game.board)
                 print(f"AI suggested move: {move}")
                 
                 if move:
-                    # Hiển thị gợi ý
                     self.hint_move = move
                     self.hint_time = pygame.time.get_ticks()
                     
-                    # Hiển thị hiệu ứng gợi ý trên bàn cờ
                     # Lấy tọa độ đích và đi
                     from_file = chess.square_file(move.from_square)
                     from_rank = 7 - chess.square_rank(move.from_square)
                     to_file = chess.square_file(move.to_square)
                     to_rank = 7 - chess.square_rank(move.to_square)
                     
-                    # Vẽ hình chữ nhật gợi ý ở vị trí xuất phát
                     hint_rect1 = pygame.Rect(
                         from_file * self.square_size,
                         from_rank * self.square_size,
@@ -759,7 +689,6 @@ class ChessUI:
                     hint_surface1.fill((0, 255, 0, 128))  # Màu xanh lá mờ
                     self.screen.blit(hint_surface1, hint_rect1)
                     
-                    # Vẽ hình chữ nhật gợi ý ở vị trí đích
                     hint_rect2 = pygame.Rect(
                         to_file * self.square_size,
                         to_rank * self.square_size,
@@ -769,7 +698,6 @@ class ChessUI:
                     hint_surface2.fill((255, 255, 0, 128))  # Màu vàng mờ
                     self.screen.blit(hint_surface2, hint_rect2)
                     
-                    # Vẽ mũi tên từ vị trí xuất phát đến vị trí đích
                     start_pos = (
                         from_file * self.square_size + self.square_size // 2,
                         from_rank * self.square_size + self.square_size // 2
@@ -780,7 +708,6 @@ class ChessUI:
                     )
                     pygame.draw.line(self.screen, (255, 0, 0), start_pos, end_pos, 3)
                     
-                    # Hiển thị thông tin nước đi
                     font = pygame.font.SysFont('Arial', 24)
                     hint_text = font.render(f"Gợi ý: {move}", True, (255, 255, 255))
                     text_rect = hint_text.get_rect(center=(self.board_size // 2, self.board_size - 20))
@@ -789,7 +716,6 @@ class ChessUI:
                     self.screen.blit(text_bg, (text_rect.x - 10, text_rect.y - 5))
                     self.screen.blit(hint_text, text_rect)
                     
-                    # Cập nhật màn hình và đợi 2 giây
                     pygame.display.flip()
                     pygame.time.wait(2000)
             else:
@@ -800,24 +726,20 @@ class ChessUI:
 
     def animate_move(self, move):
         """Tạo hiệu ứng di chuyển quân cờ mượt"""
-        # Lấy vị trí bắt đầu và kết thúc
         from_file = chess.square_file(move.from_square)
         from_rank = 7 - chess.square_rank(move.from_square)
         to_file = chess.square_file(move.to_square)
         to_rank = 7 - chess.square_rank(move.to_square)
         
-        # Tính tọa độ pixel
         from_x = from_file * self.square_size
         from_y = from_rank * self.square_size
         to_x = to_file * self.square_size
         to_y = to_rank * self.square_size
         
-        # Lấy quân cờ từ vị trí ban đầu
         piece = self.game.board.piece_at(move.from_square)
         if not piece:
             return
         
-        # Xác định hình ảnh quân cờ
         color = "w" if piece.color else "b"
         piece_type = chess.piece_symbol(piece.piece_type).lower()
         piece_key = color + piece_type
@@ -825,48 +747,39 @@ class ChessUI:
         if piece_key not in self.piece_images:
             return
         
-        # Hiệu ứng di chuyển
-        frames = 15  # Tăng số khung hình cho chuyển động mượt mà hơn
+        frames = 15  # Tăng số khung hình chuyển động cho mướt
         
         piece_img = self.piece_images[piece_key]
         
-        # Tạo hiệu ứng ánh sáng cho ô xuất phát
         glow = pygame.Surface((self.square_size, self.square_size), pygame.SRCALPHA)
-        glow.fill((255, 255, 100, 100))  # Màu vàng nhạt
+        glow.fill((255, 255, 100, 100))  
         
         for i in range(frames + 1):
-            # Vị trí hiện tại của quân cờ
             progress = i / frames
             current_x = from_x + (to_x - from_x) * progress
             current_y = from_y + (to_y - from_y) * progress
             
-            # Vẽ bàn cờ và các quân cờ
             self.draw_board(self.screen)
             
-            # Hiệu ứng sáng dần mờ trên ô xuất phát
             if i < frames // 2:
                 alpha = 100 - (i * 200 // frames)
                 glow.set_alpha(alpha)
                 self.screen.blit(glow, (from_x, from_y))
             
-            # Tạo bản sao tạm thời của bàn cờ
             temp_board = self.game.board.copy()
             temp_board.remove_piece_at(move.from_square)
             
-            # Vẽ tất cả quân còn lại
             for square in chess.SQUARES:
                 piece_at_square = temp_board.piece_at(square)
                 if not piece_at_square:
                     continue
                 
-                # Tính toán vị trí pixel
                 file = chess.square_file(square)
                 rank = 7 - chess.square_rank(square)
                 
                 x = file * self.square_size
                 y = rank * self.square_size
                 
-                # Vẽ quân cờ
                 sq_color = "w" if piece_at_square.color else "b"
                 sq_piece_type = chess.piece_symbol(piece_at_square.piece_type).lower()
                 sq_piece_key = sq_color + sq_piece_type
@@ -877,7 +790,6 @@ class ChessUI:
                     sq_piece_y = y + (self.square_size - sq_piece_img.get_height()) // 2
                     self.screen.blit(sq_piece_img, (sq_piece_x, sq_piece_y))
             
-            # Hiệu ứng bóng đổ cho quân đang di chuyển
             shadow_offset = 3
             shadow = piece_img.copy()
             shadow.fill((0, 0, 0, 100), None, pygame.BLEND_RGBA_MULT)
@@ -885,24 +797,20 @@ class ChessUI:
             shadow_y = current_y + (self.square_size - piece_img.get_height()) // 2 + shadow_offset
             self.screen.blit(shadow, (shadow_x, shadow_y))
             
-            # Vẽ quân cờ đang di chuyển
             piece_x = current_x + (self.square_size - piece_img.get_width()) // 2
             piece_y = current_y + (self.square_size - piece_img.get_height()) // 2
             self.screen.blit(piece_img, (piece_x, piece_y))
             
-            # Hiệu ứng ánh sáng ở quân đang di chuyển
             light_surface = pygame.Surface((piece_img.get_width(), piece_img.get_height()), pygame.SRCALPHA)
             light_alpha = 100 - abs((i - frames//2) * 200 // frames)
             light_surface.fill((255, 255, 255, max(0, light_alpha)))
             self.screen.blit(light_surface, (piece_x, piece_y), special_flags=pygame.BLEND_ADD)
             
-            # Vẽ sidebar
             self.draw_sidebar(self.screen)
             
             pygame.display.flip()
             pygame.time.wait(20)  # 20ms delay giữa các frame
         
-        # Hiệu ứng ánh sáng khi quân đến đích
         for i in range(5):  # 5 frames flash
             alpha = 150 - i * 30  # Giảm dần độ trong suốt
             flash = pygame.Surface((self.square_size, self.square_size), pygame.SRCALPHA)
@@ -917,17 +825,15 @@ class ChessUI:
             # Không xử lý click nếu game kết thúc hoặc đang đợi AI
             return
         
-        # Chuyển đổi vị trí pixel thành tọa độ bàn cờ
         file = pos[0] // self.square_size
         rank = 7 - (pos[1] // self.square_size)
         
-        # Kiểm tra tọa độ hợp lệ
         if not (0 <= file < 8 and 0 <= rank < 8):
             return
             
         square = chess.square(file, rank)
         
-        # Trường hợp 1: Chọn quân cờ
+        # TH 1: Chọn quân cờ
         if self.selected_square is None:
             piece = self.game.board.piece_at(square)
             if piece and piece.color == self.game.current_player:
@@ -935,13 +841,12 @@ class ChessUI:
                 self.legal_moves = [move for move in self.game.get_legal_moves() 
                                 if move.from_square == square]
                 
-                # Hiệu ứng âm thanh khi chọn quân (nếu có)
                 if hasattr(self, 'play_sound'):
                     self.play_sound('select')
                     
                 print(f"Đã chọn quân tại {chess.square_name(square)}")
                 
-        # Trường hợp 2: Chọn ô đích hoặc bỏ chọn
+        # TH2: Chọn ô đích hoặc bỏ chọn
         else:
             # Nếu nhấp vào quân cùng màu khác, chọn quân đó thay thế
             if square != self.selected_square and self.game.board.piece_at(square) and \
@@ -950,14 +855,13 @@ class ChessUI:
                 self.legal_moves = [move for move in self.game.get_legal_moves() 
                                 if move.from_square == square]
                 
-                # Hiệu ứng âm thanh khi chọn quân (nếu có)
                 if hasattr(self, 'play_sound'):
                     self.play_sound('select')
                     
                 print(f"Đã chọn lại quân tại {chess.square_name(square)}")
                 return
             
-            # Tìm nước đi phù hợp
+            # Tìm nước đi 
             move = None
             for legal_move in self.legal_moves:
                 if legal_move.to_square == square:
@@ -966,26 +870,23 @@ class ChessUI:
             
             # Nếu đã tìm thấy nước đi hợp lệ
             if move:
-                # Kiểm tra xem có phải là nước phong cấp không
+                # check xem có phải là nước phong cấp không
                 if self.is_promotion_move(move):
                     promotion_piece = self.show_promotion_dialog()
                     if promotion_piece:
                         move = chess.Move(move.from_square, move.to_square, promotion=promotion_piece)
                     else:
-                        # Người chơi hủy chọn quân phong cấp
+                        # hủy chọn quân phong cấp
                         self.selected_square = None
                         self.legal_moves = []
                         return
                 
-                # Hiệu ứng di chuyển quân cờ
                 if hasattr(self, 'animate_move'):
                     self.animate_move(move)
                 
-                # Thực hiện nước đi
                 success = self.game.make_move(move)
                 
                 if success:
-                    # Hiệu ứng âm thanh khi di chuyển (nếu có)
                     if hasattr(self, 'play_sound'):
                         captured = self.game.board.is_capture(move)
                         self.play_sound('capture' if captured else 'move')
@@ -1009,30 +910,24 @@ class ChessUI:
         if self.game.is_game_over():
             return
             
-        # Set flag to indicate AI is thinking
         self.game.ai_thinking = True
         
         try:
-            # Hiển thị trạng thái "đang suy nghĩ"
             self.render(self.screen)
             pygame.display.flip()
             
-            start_time = time.time()  # Bắt đầu đo thời gian
+            start_time = time.time() 
             
-            # Lấy nước đi từ AI
             ai_move = self.ai.get_move(self.game.board)
             
             elapsed_time = time.time() - start_time
-            # Nếu AI trả về quá nhanh, tạm dừng một chút để người dùng thấy trạng thái "đang suy nghĩ"
             if elapsed_time < 0.5:
                 pygame.time.wait(int((0.5 - elapsed_time) * 1000))
             
-            # Thực hiện nước đi nếu AI trả về một nước đi hợp lệ
             if ai_move:
                 success = self.game.make_move(ai_move)
                 print(f"AI đã đi: {ai_move}, thành công: {success}")
                 
-                # Kiểm tra xem trò chơi đã kết thúc chưa sau nước đi của AI
                 if self.game.is_game_over():
                     self.game_over_action()
             else:
@@ -1046,32 +941,25 @@ class ChessUI:
 
     def draw_load_pgn_button(self, screen, x, y):
         """Vẽ nút tải dữ liệu PGN để huấn luyện AI"""
-        # Tiêu đề
         font_title = pygame.font.SysFont('Arial', 16, bold=True)
         title = font_title.render("Huấn luyện từ PGN", True, (50, 50, 100))
         screen.blit(title, (x, y))
         
-        # Vẽ nút tải PGN
         button_rect = pygame.Rect(x, y + 25, 200, 30)
         
-        # Gradient cho nút
         pygame.draw.rect(screen, (80, 120, 200), button_rect)  # Màu cơ bản
         
-        # Hiệu ứng gradient
         gradient = pygame.Surface((button_rect.width, button_rect.height), pygame.SRCALPHA)
         pygame.draw.rect(gradient, (255, 255, 255, 80), (0, 0, button_rect.width, button_rect.height//2))
         screen.blit(gradient, button_rect)
         
-        # Viền nút
         pygame.draw.rect(screen, (50, 50, 50), button_rect, 1)
         
-        # Vẽ văn bản
         font = pygame.font.SysFont('Arial', 14, bold=True)
         text = font.render("TẢI DỮ LIỆU PGN", True, (255, 255, 255))
         text_rect = text.get_rect(center=button_rect.center)
         screen.blit(text, text_rect)
         
-        # Lưu lại vị trí nút
         self.load_pgn_rect = button_rect
 
     def load_pgn_data(self):
@@ -1079,25 +967,20 @@ class ChessUI:
         import tkinter as tk
         from tkinter import filedialog
         
-        # Tạo cửa sổ Tkinter và ẩn đi
         root = tk.Tk()
         root.withdraw()
         
-        # Mở hộp thoại chọn file
         file_path = filedialog.askopenfilename(
             title="Chọn file PGN",
             filetypes=[("PGN files", "*.pgn"), ("All files", "*.*")]
         )
         
-        # Nếu không chọn file nào, thoát
         if not file_path:
             return
         
-        # Hiển thị thông báo đang tải
         self.show_loading_overlay("Đang tải dữ liệu PGN...", color=(0, 0, 100))
         
         try:
-            # Gọi hàm học từ file PGN
             games_learned = self.ai.learn_from_pgn_file(file_path)
             message = f"Đã hoàn thành! Đã học từ {games_learned} ván cờ"
             color = (0, 100, 0)  # Màu xanh lá
@@ -1105,50 +988,41 @@ class ChessUI:
             message = f"Lỗi: {str(e)}"
             color = (200, 0, 0)  # Màu đỏ
         
-        # Hiển thị kết quả
         self.show_loading_overlay(message, duration=3000, color=color)
 
     def show_loading_overlay(self, message, duration=2000, color=(0, 0, 0)):
         """Hiển thị overlay với thông báo"""
-        # Tạo overlay mờ
         overlay = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, 160))  # RGBA, mờ 60%
         self.screen.blit(overlay, (0, 0))
         
-        # Tạo khung thông báo
         msg_width = 400
         msg_height = 120
         msg_rect = pygame.Rect((self.width - msg_width) // 2, (self.height - msg_height) // 2, 
                             msg_width, msg_height)
         
-        # Vẽ khung thông báo
         pygame.draw.rect(self.screen, (240, 240, 240), msg_rect)
         pygame.draw.rect(self.screen, (100, 100, 100), msg_rect, 2)
         
-        # Vẽ văn bản
         font = pygame.font.SysFont('Arial', 18)
         text = font.render(message, True, color)
         text_rect = text.get_rect(center=(self.width // 2, self.height // 2))
         self.screen.blit(text, text_rect)
         
-        # Vẽ logo hoặc biểu tượng (tùy chọn)
         if duration > 0:
             pygame.display.flip()
             pygame.time.wait(duration)
 
     def draw_captured_pieces(self, screen, x, y):
         """Vẽ các quân cờ đã bị bắt"""
-        # Tiêu đề
         font_title = pygame.font.SysFont('Arial', 16, bold=True)
         title = font_title.render("QUÂN CỜ BỊ BẮT", True, (50, 50, 100))
         screen.blit(title, (x, y))
         
-        # Vẽ khung chứa
         captured_rect = pygame.Rect(x, y + 25, 200, 100)
         pygame.draw.rect(screen, (245, 245, 245), captured_rect)
         pygame.draw.rect(screen, (180, 180, 180), captured_rect, 1)
         
-        # Kiểm tra xem game có danh sách quân bị bắt không
         if not hasattr(self.game, 'captured_pieces') or not self.game.captured_pieces:
             empty_text = pygame.font.SysFont('Arial', 12).render("Chưa có quân nào bị bắt", True, (100, 100, 100))
             screen.blit(empty_text, (x + 10, y + 60))
@@ -1164,24 +1038,21 @@ class ChessUI:
             else:  # Quân đen
                 white_captured[piece.piece_type] += 1
         
-        # Ký hiệu quân cờ
         symbols = {
             chess.PAWN: "P", chess.KNIGHT: "N", chess.BISHOP: "B", 
             chess.ROOK: "R", chess.QUEEN: "Q", chess.KING: "K"
         }
         
-        # Vẽ quân bị bắt
         font = pygame.font.SysFont('Arial', 12)
         white_x = x + 10
         black_x = x + 110
         
-        # Tiêu đề cột
         white_title = font.render("Quân trắng:", True, (0, 0, 0))
         black_title = font.render("Quân đen:", True, (0, 0, 0))
         screen.blit(white_title, (white_x, y + 30))
         screen.blit(black_title, (black_x, y + 30))
         
-        # Vẽ số lượng
+        
         y_offset = y + 50
         
         for piece_type in [chess.QUEEN, chess.ROOK, chess.BISHOP, chess.KNIGHT, chess.PAWN]:
@@ -1197,7 +1068,7 @@ class ChessUI:
                 y_offset += 16
 
     def draw_pieces(self, screen=None):
-        screen = screen or self.screen  # Sử dụng tham số screen nếu được cung cấp, nếu không dùng self.screen
+        screen = screen or self.screen  
         if hasattr(self.game, 'board'):
             board_state = self.game.board
             for rank in range(8):
@@ -1212,20 +1083,16 @@ class ChessUI:
                                 (file * self.square_size, (7 - rank) * self.square_size)
                             )
         if hasattr(self.game, 'ai_thinking') and self.game.ai_thinking:
-            # Tạo hiệu ứng mờ
             overlay = pygame.Surface((self.board_size, 60), pygame.SRCALPHA)
             overlay.fill((0, 0, 0, 160))  # Nền đen mờ
             
-            # Vị trí hiển thị thông báo
             screen.blit(overlay, (0, self.board_size // 2 - 30))
             
-            # Vẽ văn bản
             font = pygame.font.SysFont('Arial', 24, bold=True)
             text = font.render("AI ĐANG SUY NGHĨ...", True, (255, 255, 255))
             text_rect = text.get_rect(center=(self.board_size // 2, self.board_size // 2))
             screen.blit(text, text_rect)
             
-            # Vẽ dấu chấm động để thể hiện đang xử lý
             current_time = pygame.time.get_ticks()
             dots = "." * ((current_time // 500) % 4)
             dots_text = font.render(dots, True, (255, 255, 255))
@@ -1234,17 +1101,14 @@ class ChessUI:
     def reset_game(self):
         """Khởi động lại game"""
         try:
-            # Xác định chế độ game hiện tại
             current_mode = "pvp"
             if hasattr(self.game, 'game_mode'):
                 current_mode = self.game.game_mode
             
-            # Xác định độ khó nếu có
             difficulty = 2
             if hasattr(self.game, 'ai') and hasattr(self.game.ai, 'difficulty'):
                 difficulty = self.game.ai.difficulty
             
-            # Tạo game mới với cùng cài đặt
             self.game = ChessGame()
             if current_mode == "pve":
                 self.game.game_mode = "pve"
@@ -1254,12 +1118,10 @@ class ChessUI:
             self.ai.difficulty = difficulty
             self.game.ai = self.ai
             
-            # Reset trạng thái
             self.selected_square = None
             self.legal_moves = []
             self.game_over = False
             
-            # Phát âm thanh nếu có
             if hasattr(self, 'new_game_sound') and hasattr(self, 'sound_on') and self.sound_on:
                 self.new_game_sound.play()
                 
@@ -1273,14 +1135,11 @@ class ChessUI:
             return
             
         # Đánh dấu game kết thúc bằng cách cho vua của người chơi hiện tại chiếu bí
-        # Đây là giải pháp đơn giản hơn là sửa đổi cấu trúc game để thêm trạng thái resign
         current_player = self.game.current_player
         winner = "Đen" if current_player else "Trắng"
         
-        # Hiển thị thông báo
         self.show_message(f"{winner} thắng do đối phương đầu hàng!")
         
-        # Để AI học từ kết quả này
         if hasattr(self.game, 'game_over_learn'):
             self.game.game_over_learn()
             
@@ -1289,7 +1148,6 @@ class ChessUI:
         if hasattr(self, 'sound_on'):
             self.sound_on = not self.sound_on
             
-            # Điều chỉnh volume cho tất cả âm thanh
             volume = 1.0 if self.sound_on else 0.0
             if hasattr(self, 'move_sound'):
                 self.move_sound.set_volume(volume)
@@ -1302,7 +1160,6 @@ class ChessUI:
             if hasattr(self, 'undo_sound'):
                 self.undo_sound.set_volume(volume)
         else:
-            # Khởi tạo âm thanh nếu chưa có
             self.sound_on = True
             self.load_sounds()
             
@@ -1320,33 +1177,27 @@ class ChessUI:
                 
     def pause_game(self):
         """Tạm dừng game"""
-        # Lưu trạng thái hiện tại
         screen_copy = pygame.display.get_surface().copy()
         
-        # Tạo overlay cho màn hình tạm dừng
         screen_width, screen_height = pygame.display.get_surface().get_size()
         overlay = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, 128))  # RGBA, alpha=128 cho hiệu ứng mờ
         
-        # Tạo font
         font = pygame.font.SysFont('Arial', 36)
         pause_text = font.render("GAME PAUSED", True, (255, 255, 255))
         continue_text = font.render("Press any key to continue", True, (255, 255, 255))
         
-        # Vị trí hiển thị
         pause_x = (screen_width - pause_text.get_width()) // 2
         pause_y = (screen_height - pause_text.get_height()) // 2 - 20
         
         continue_x = (screen_width - continue_text.get_width()) // 2
         continue_y = pause_y + pause_text.get_height() + 20
         
-        # Hiển thị màn hình tạm dừng
         pygame.display.get_surface().blit(overlay, (0, 0))
         pygame.display.get_surface().blit(pause_text, (pause_x, pause_y))
         pygame.display.get_surface().blit(continue_text, (continue_x, continue_y))
         pygame.display.flip()
         
-        # Đợi người dùng nhấn phím để tiếp tục
         paused = True
         while paused:
             for event in pygame.event.get():
@@ -1356,7 +1207,6 @@ class ChessUI:
                 elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
                     paused = False
         
-        # Khôi phục màn hình
         pygame.display.get_surface().blit(screen_copy, (0, 0))
         pygame.display.flip()
         
@@ -1366,7 +1216,6 @@ class ChessUI:
         pygame.draw.rect(self.screen, (200, 200, 200), status_rect)
         pygame.draw.rect(self.screen, (0, 0, 0), status_rect, 2)
 
-        # Hiển thị thông tin trạng thái
         if hasattr(self.game, 'current_player'):
             player_text = f"Turn: {'White' if self.game.current_player else 'Black'}"
         else:
@@ -1384,25 +1233,21 @@ class ChessUI:
         self.screen.blit(text_surface, (text_x, text_y))
     
     def draw_game_menu(self):
-        # Màu nền gradient
         for y in range(self.height):
             color_value = 30 + int(30 * (y / self.height))
             pygame.draw.line(self.screen, (color_value, color_value, color_value+10), 
                         (0, y), (self.width, y))
         
-        # Thêm background logo
         if hasattr(self, 'background_image'):
             bg_img = self.background_image
             self.screen.blit(bg_img, (self.width//2 - bg_img.get_width()//2, 
                                 self.height//2 - bg_img.get_height()//2))
         
-        # Tiêu đề game với hiệu ứng phát sáng
         title_font = pygame.font.SysFont('Segoe UI', 72, bold=True)
         title_text = "CHESS MASTER"
         title_color = (255, 215, 0)  # Gold
         title = title_font.render(title_text, True, title_color)
         
-        # Hiệu ứng ánh sáng cho tiêu đề
         for i in range(3):
             glow = title_font.render(title_text, True, (*title_color[:3], 50-i*15))
             self.screen.blit(glow, (self.width//2 - title.get_width()//2 - i*2, 
@@ -1410,11 +1255,9 @@ class ChessUI:
             self.screen.blit(glow, (self.width//2 - title.get_width()//2 + i*2, 
                                 self.height//5 + i*2))
         
-        # Tiêu đề chính
         self.screen.blit(title, (self.width//2 - title.get_width()//2, 
                             self.height//5))
         
-        # Tạo các nút menu hiện đại
         button_width = 300
         button_height = 60
         
@@ -1432,17 +1275,15 @@ class ChessUI:
             button_width, button_height
         )
         
-        # Kiểm tra hover
+        # check hover
         mouse_pos = pygame.mouse.get_pos()
         pvp_hover = pvp_button.collidepoint(mouse_pos)
         pve_hover = pve_button.collidepoint(mouse_pos)
         
-        # Vẽ các nút với hiệu ứng gradient và hover
         for button, is_hover, y_pos, text, color in [
             (pvp_button, pvp_hover, self.height//2 - button_height - 20, "PLAYER vs PLAYER", (41, 128, 185)),
             (pve_button, pve_hover, self.height//2 + 20, "PLAYER vs AI", (39, 174, 96))
         ]:
-            # Màu nút dựa trên trạng thái hover
             button_color = (color[0]+20, color[1]+20, color[2]+20) if is_hover else color
             
             # Vẽ nút với gradient
@@ -1453,17 +1294,14 @@ class ChessUI:
                             (button.left, y_pos + i), 
                             (button.right, y_pos + i))
             
-            # Vẽ viền và hiệu ứng sáng
             pygame.draw.rect(self.screen, (255, 255, 255, 50), button, 1, border_radius=3)
             
             if is_hover:
-                # Hiệu ứng sáng khi hover
                 for i in range(3):
                     glow_rect = button.inflate(i*4, i*4)
                     pygame.draw.rect(self.screen, (255, 255, 255, 50-i*15), 
                                 glow_rect, 1, border_radius=3+i)
             
-            # Vẽ văn bản
             button_font = pygame.font.SysFont('Segoe UI', 24, bold=True)
             text_surf = button_font.render(text, True, (255, 255, 255))
             self.screen.blit(text_surf, (
@@ -1476,7 +1314,6 @@ class ChessUI:
         version_text = version_font.render("Version 2.0", True, (180, 180, 180))
         self.screen.blit(version_text, (20, self.height - 40))
         
-        # Trang trí thêm các icon cờ
         icon_font = pygame.font.SysFont('Segoe UI Symbol', 36)
         chess_icons = ["♔", "♕", "♖", "♗", "♘", "♙"]
         for i, icon in enumerate(chess_icons):
@@ -1489,7 +1326,6 @@ class ChessUI:
     
     def draw_game_over_screen(self):
         """Hiển thị màn hình kết thúc game"""
-        # Tạo overlay gradient
         overlay = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
         for y in range(self.height):
             alpha = 180 + int(50 * (y / self.height))  # Alpha tăng dần từ trên xuống
@@ -1497,13 +1333,11 @@ class ChessUI:
             pygame.draw.line(overlay, color, (0, y), (self.width, y))
         self.screen.blit(overlay, (0, 0))
         
-        # Tạo khung thông báo với hiệu ứng ánh sáng
         box_width = 600
         box_height = 350
         box_rect = pygame.Rect((self.width - box_width) // 2, (self.height - box_height) // 2, 
                             box_width, box_height)
         
-        # Vẽ khung với gradient
         for y in range(box_rect.height):
             color_value = 40 + int(20 * (y / box_rect.height))
             line_color = (color_value, color_value, color_value + 10)
@@ -1511,15 +1345,13 @@ class ChessUI:
                         (box_rect.left, box_rect.top + y),
                         (box_rect.right, box_rect.top + y))
         
-        # Viền 
+         
         pygame.draw.rect(self.screen, (212, 175, 55), box_rect, 3)  # Viền vàng
         
-        # Thêm hiệu ứng ánh sáng
         for i in range(3):
             light_rect = box_rect.inflate(i*8, i*8)
             pygame.draw.rect(self.screen, (255, 215, 0, 100-i*30), light_rect, 2)
         
-        # Xác định thông điệp kết thúc
         game_state = self.game.get_state()
         if game_state == GameState.CHECKMATE:
             winner = "WHITE" if not self.game.current_player else "BLACK"
@@ -1535,22 +1367,18 @@ class ChessUI:
             sub_message = ""
             color = (200, 200, 200)
         
-        # Vẽ tiêu đề
         title_font = pygame.font.SysFont('Segoe UI', 48, bold=True)
         game_over_text = title_font.render("GAME OVER", True, (255, 255, 255))
         
-        # Hiệu ứng bóng đổ cho văn bản
         shadow_text = title_font.render("GAME OVER", True, (0, 0, 0))
         self.screen.blit(shadow_text, (self.width // 2 - game_over_text.get_width() // 2 + 3, 
                                     box_rect.y + 40 + 3))
         self.screen.blit(game_over_text, (self.width // 2 - game_over_text.get_width() // 2, 
                                         box_rect.y + 40))
         
-        # Vẽ kết quả
         result_font = pygame.font.SysFont('Segoe UI', 36, bold=True)
         result_text = result_font.render(message, True, color)
         
-        # Hiệu ứng phát sáng cho kết quả
         for i in range(3):
             glow_text = result_font.render(message, True, (*color[:3], 50-i*15))
             self.screen.blit(glow_text, (self.width // 2 - result_text.get_width() // 2 - i, 
@@ -1561,13 +1389,11 @@ class ChessUI:
         self.screen.blit(result_text, (self.width // 2 - result_text.get_width() // 2, 
                                     box_rect.y + 120))
         
-        # Vẽ thông điệp phụ
         sub_font = pygame.font.SysFont('Segoe UI', 24)
         sub_text = sub_font.render(sub_message, True, color)
         self.screen.blit(sub_text, (self.width // 2 - sub_text.get_width() // 2, 
                                 box_rect.y + 170))
         
-        # Vẽ hướng dẫn với hiệu ứng nhấp nháy
         guide_font = pygame.font.SysFont('Segoe UI', 22)
         
         alpha = 155 + int(100 * abs(math.sin(pygame.time.get_ticks() / 500)))
@@ -1580,7 +1406,6 @@ class ChessUI:
         self.screen.blit(menu_text, (self.width // 2 - menu_text.get_width() // 2, 
                                 box_rect.y + 270))
         
-        # Vẽ các icon trang trí
         icon_font = pygame.font.SysFont('Segoe UI Symbol', 36)
         crown_icon = icon_font.render("♔", True, (255, 215, 0))
         self.screen.blit(crown_icon, (box_rect.x + 50, box_rect.y + 40))
@@ -1590,17 +1415,14 @@ class ChessUI:
         """Hiển thị thông tin cơ bản về game"""
         font = pygame.font.SysFont('Arial', 16, bold=True)
         
-        # Thông tin chế độ chơi
         mode_text = "Chế độ: " + ("Người vs Máy" if self.game.game_mode == "pve" else "Người vs Người")
         mode_surface = font.render(mode_text, True, (0, 0, 0))
         screen.blit(mode_surface, (x, y))
         
-        # Thông tin người chơi hiện tại
         current_player = "Trắng" if self.game.current_player else "Đen"
         player_surface = font.render(f"Lượt chơi: {current_player}", True, (0, 0, 0))
         screen.blit(player_surface, (x, y + 25))
         
-        # Thông tin trạng thái game
         if self.game.board.is_check():
             state_text = "Trạng thái: CHIẾU"
             state_color = (255, 0, 0)
@@ -1618,32 +1440,25 @@ class ChessUI:
         """Vẽ sidebar với tất cả các nút và thông tin"""
         sidebar_rect = pygame.Rect(self.board_size + 20, 0, self.width - self.board_size - 20, self.height)
     
-        # Gradient cho sidebar
         for y in range(sidebar_rect.height):
-            # Tạo hiệu ứng gradient từ trên xuống
             color_value = 60 + int(20 * (1 - y / sidebar_rect.height))
             pygame.draw.line(screen, (color_value, color_value, color_value+20), 
                         (sidebar_rect.left, y), (sidebar_rect.right, y))
         
-        # Viền sang trọng
         pygame.draw.rect(screen, (212, 175, 55), sidebar_rect, 2)  # Viền vàng
         
-        # Vẽ tiêu đề
         title_font = pygame.font.SysFont('Segoe UI', 28, bold=True)
         title = title_font.render("CHESS MASTER", True, (230, 230, 230))
         
-        # Hiệu ứng bóng cho tiêu đề
         title_shadow = title_font.render("CHESS MASTER", True, (20, 20, 20))
         screen.blit(title_shadow, (sidebar_rect.centerx - title.get_width() // 2 + 2, 25 + 2))
         screen.blit(title, (sidebar_rect.centerx - title.get_width() // 2, 25))
         
-        # Vẽ đường kẻ ngăn cách
         separator_y = 70
         pygame.draw.line(screen, (212, 175, 55), 
                     (sidebar_rect.left + 20, separator_y),
                     (sidebar_rect.right - 20, separator_y), 2)
         
-        # Các thành phần tiếp theo với vị trí tính từ separator_y
         y_pos = separator_y + 20
         
         # Vẽ các thành phần sidebar
@@ -1689,18 +1504,14 @@ class ChessUI:
     
     def draw_game_controls(self, screen, x, y):
         """Vẽ thanh công cụ điều khiển game với giao diện tối giản và hiệu quả"""
-        # Kích thước nhỏ gọn hơn cho thanh công cụ
         taskbar_width = 260
         taskbar_height = 40
         
-        # Định vị taskbar ở chính giữa sidebar
         sidebar_width = self.width - self.board_size - 20
         taskbar_x = self.board_size + (sidebar_width - taskbar_width) // 2
         
-        # Vẽ nền thanh công cụ với gradient đơn giản
         taskbar_rect = pygame.Rect(taskbar_x, y, taskbar_width, taskbar_height)
         
-        # Gradient nhẹ từ xám đậm đến xám nhạt
         for i in range(taskbar_height):
             ratio = i / taskbar_height
             r = int(60 + ratio * 30)
@@ -1710,25 +1521,20 @@ class ChessUI:
                           (taskbar_x, y + i), 
                           (taskbar_x + taskbar_width, y + i))
         
-        # Viền đơn giản
         pygame.draw.rect(screen, (150, 150, 150), taskbar_rect, 1, border_radius=6)
         
-        # Định nghĩa các nút điều khiển
         buttons = [
             {"text": "HINT", "color": (41, 128, 185), "attr": "hint_button_rect", "action": self.show_hint},
             {"text": "UNDO", "color": (230, 126, 34), "attr": "undo_button_rect", "action": self.undo_move},
             {"text": "RESET", "color": (155, 89, 182), "attr": "reset_button_rect", "action": self.reset_game}
         ]
         
-        # Tính toán kích thước nút - nhỏ gọn và cân đối
         button_count = len(buttons)
         button_width = taskbar_width / button_count - 10  # Margin between buttons
         button_height = taskbar_height - 10  # Padding top and bottom
         
-        # Kiểm tra chuột
         mouse_pos = pygame.mouse.get_pos()
         
-        # Vẽ các nút cạnh nhau, cân đối
         for i, btn in enumerate(buttons):
             # Position buttons evenly
             btn_x = taskbar_x + 5 + i * (button_width + 5)
@@ -1738,35 +1544,28 @@ class ChessUI:
             # Check if mouse is over button
             is_hovered = btn_rect.collidepoint(mouse_pos)
             
-            # Darker shade for hover state
             color = btn["color"]
             base_color = (color[0] * 0.9, color[1] * 0.9, color[2] * 0.9)
             if is_hovered:
                 base_color = color
             
-            # Draw button with rounded corners
             pygame.draw.rect(screen, base_color, btn_rect, border_radius=5)
             
-            # Simple highlight effect on top edge
             highlight = pygame.Rect(btn_rect.x, btn_rect.y, btn_rect.width, 1)
             pygame.draw.rect(screen, (255, 255, 255, 100), highlight)
             
-            # Draw centered text with shadow
             font = pygame.font.SysFont('Arial', 14, bold=True)
             text = font.render(btn["text"], True, (255, 255, 255))
             text_rect = text.get_rect(center=btn_rect.center)
             
-            # Shadow
             shadow_rect = text_rect.copy()
             shadow_rect.x += 1
             shadow_rect.y += 1
             shadow_text = font.render(btn["text"], True, (0, 0, 0, 120))
             screen.blit(shadow_text, shadow_rect)
             
-            # Text
             screen.blit(text, text_rect)
             
-            # Store button rect for event handling
             setattr(self, btn["attr"], btn_rect)
 
     def draw_move_history(self, screen, x, y):
@@ -1776,12 +1575,10 @@ class ChessUI:
         title = font_title.render("MOVE HISTORY", True, (50, 50, 120))
         screen.blit(title, (x, y))
         
-        # Tính toán kích thước container phù hợp
         history_width = 260
         history_height = 80
         history_rect = pygame.Rect(x, y + 25, history_width, history_height)
         
-        # Vẽ nền gradient cho container
         for i in range(history_height):
             ratio = i / history_height
             r = int(245 - ratio * 10)
@@ -1791,12 +1588,9 @@ class ChessUI:
                           (x, y + 25 + i), 
                           (x + history_width, y + 25 + i))
         
-        # Vẽ viền cho container
         pygame.draw.rect(screen, (180, 180, 200), history_rect, 1)
         
-        # Hiển thị lịch sử nước đi
         if not hasattr(self.game, 'move_history') or not self.game.move_history:
-            # Trường hợp chưa có nước đi nào
             empty_text = pygame.font.SysFont('Arial', 12).render("No moves yet", True, (100, 100, 120))
             screen.blit(empty_text, (x + history_width//2 - empty_text.get_width()//2, 
                                    y + 25 + history_height//2 - empty_text.get_height()//2))
@@ -1804,7 +1598,7 @@ class ChessUI:
         
         # Hiển thị lịch sử
         font = pygame.font.SysFont('Arial', 12)
-        moves_per_row = 3  # Giảm xuống để tăng khả năng đọc
+        moves_per_row = 3  
         y_offset = y + 30
         line_height = 18
         
@@ -1816,7 +1610,6 @@ class ChessUI:
             row = (i - start_idx) // moves_per_row
             col = (i - start_idx) % moves_per_row
             
-            # Format nước đi với màu sắc tương ứng
             color = (0, 100, 0) if i % 2 == 0 else (150, 0, 0)  # Xanh cho quân trắng, đỏ cho quân đen
             
             move_text = f"{move_num}.{move}"
@@ -1849,27 +1642,22 @@ class ChessUI:
     
     def draw_learning_toggle(self, screen, x, y):
         """Draw AI learning mode toggle button"""
-        # Title
         font_title = pygame.font.SysFont('Arial', 16, bold=True)
         title = font_title.render("Learning Mode", True, (50, 50, 100))
         screen.blit(title, (x, y))
         
-        # Draw toggle button
         button_rect = pygame.Rect(x, y + 25, 200, 30)
         button_color = (0, 180, 0) if self.ai.learning_enabled else (180, 0, 0)
         
-        # Draw button with border and 3D effect
         pygame.draw.rect(screen, button_color, button_rect)
         pygame.draw.rect(screen, (255, 255, 255), button_rect.inflate(-4, -4), 1)  # Inner border
         pygame.draw.rect(screen, (50, 50, 50), button_rect, 1)  # Outer border
         
-        # Draw button text
         font = pygame.font.SysFont('Arial', 14, bold=True)
         text = font.render("ON" if self.ai.learning_enabled else "OFF", True, (255, 255, 255))
         text_rect = text.get_rect(center=button_rect.center)
         screen.blit(text, text_rect)
         
-        # Store button position for click handling
         self.learning_toggle_rect = button_rect
 
     def draw_game_state(self, screen, state):
@@ -1892,20 +1680,16 @@ class ChessUI:
         self.running = True
         clock = pygame.time.Clock()
         
-        # Xác định đang ở menu hay đang chơi
         self.in_menu = True
         
         while self.running:
-            # Xử lý sự kiện
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
                     break
                 
                 if self.in_menu:
-                    # Xử lý sự kiện trong menu
                     if event.type == pygame.MOUSEBUTTONDOWN:
-                        # Vẽ menu và lấy về các nút
                         pvp_button, pve_button = self.draw_game_menu()
                         
                         # Kiểm tra click vào nút nào
@@ -1921,7 +1705,6 @@ class ChessUI:
                         self.running = False
                         break
             
-            # Vẽ giao diện
             if self.in_menu:
                 self.draw_game_menu()
             else:
