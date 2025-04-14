@@ -2,14 +2,12 @@ import chess
 from enum import Enum, auto
 from src.learning_chess_ai import ChessAI
 
-# Định nghĩa cho GameMode
 class GameMode(Enum):
     PLAYER_VS_PLAYER = auto()
     PLAYER_VS_AI = auto()
     AI_VS_AI = auto()
     AI_TRAINING = auto()
 
-# Định nghĩa cho GameState
 class GameState(Enum):
     ACTIVE = auto()
     CHECK = auto()
@@ -51,16 +49,12 @@ class ChessGame:
             if self.board.piece_at(to_square):
                 self.captured_pieces.append((self.board.piece_at(to_square), self.current_player))
             
-            # Thực hiện nước đi
             self.board.push(move)
             
-            # Lưu vào lịch sử
             self.move_history.append(move.uci())
             
-            # Chuyển lượt
             self.current_player = not self.current_player
             
-            # Update trạng thái game
             self.update_game_state()
             
             return True
