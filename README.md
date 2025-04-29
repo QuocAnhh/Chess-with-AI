@@ -3,7 +3,7 @@
 ![Chess Game](https://img.shields.io/badge/Chess-AI-brightgreen)
 ![Status](https://img.shields.io/badge/Status-Active-success)
 
-Một ứng dụng cờ vua với AI, cho phép người dùng chơi cờ với máy tính ở nhiều cấp độ khác nhau.
+Một game cờ vua chơi với AI, cho phép người dùng chơi cờ với máy tính ở nhiều cấp độ khác nhau.
 
 ![Chess Game Preview](assets/preview.png)
 
@@ -77,11 +77,11 @@ Chess-with-AI/
 
 ## Đóng góp
 
-Dự án vẫn đang trong giai đoạn hoàn thiện, vậy nên mọi đóng góp của mọi người đều rất đáng giá và hoan nghênh! Nếu mọi người muốn đóng góp vào dự án, hãy làm theo các bước sau:
+Dự án vẫn đang trong giai đoạn hoàn thiện, vậy nên mọi đóng góp của mọi người đều rất đáng giá! Nếu mọi người muốn đóng góp vào dự án, hãy làm theo các bước sau:
 
 1. Fork repository
 2. Tạo branch mới (`git checkout -b feature/amazing-feature`)
-3. Commit thay đổi của bạn (`git commit -m 'Add some amazing feature'`)
+3. Commit thay đổi (`git commit -m 'Add some amazing feature'`)
 4. Push lên branch (`git push origin feature/amazing-feature`)
 5. Mở Pull Request
 
