@@ -7,7 +7,7 @@ Một game cờ vua chơi với AI, cho phép người dùng chơi cờ với m�
 
 ![Chess Game Preview](assets/preview.png)
 
-## Tính năng
+## Feature
 
 - Giao diện đồ họa trực quan của bàn cờ vua
 - Chơi với AI ở nhiều cấp độ khó khác nhau
@@ -20,13 +20,13 @@ Một game cờ vua chơi với AI, cho phép người dùng chơi cờ với m�
 - Lưu và tải các ván cờ
 - Hiển thị lịch sử các nước đi
 
-## Cài đặt
+## Settings
 
 ### Yêu cầu hệ thống
-- Python 3.11.6 trở lên
+- Python 3.11 trở lên
 - Các thư viện cần thiết (liệt kê trong `requirements.txt`)
 
-### Cách cài đặt
+### How to install
 1. Clone repository này:
 ```
 git clone https://github.com/QuocAnhh/Chess-with-AI.git
@@ -38,14 +38,14 @@ cd Chess-with-AI
 pip install -r requirements.txt
 ```
 
-## Cách sử dụng
+## How to use
 
 Chạy chương trình với lệnh:
 ```
 python main.py
 ```
 
-### Hướng dẫn điều khiển:
+### Control Instructions:
 - Click chuột để chọn quân cờ và di chuyển
 - Nhấn `R` để reset game/chơi ván mới
 - Nhấn `Z` để đi lại nước đi (Undo)
@@ -53,16 +53,16 @@ python main.py
 - Nhấn `P` để tạm dừng game
 - Nhấn `M` để quay về menu chính
 
-## Thuật toán 
+## Algorithm
 
 Dự án sử dụng thuật toán Minimax với cắt tỉa Alpha-Beta để điều khiển AI. Các cấp độ khó khác nhau được thực hiện bằng cách thay đổi độ sâu tìm kiếm của thuật toán.
 
-## Công nghệ sử dụng
+## Technology
 
 - Python
 - Pygame cho giao diện đồ họa
 
-## Cấu trúc dự án
+## Project Structure
 
 ```
 Chess-with-AI/
@@ -75,7 +75,7 @@ Chess-with-AI/
 └── requirements.txt   # Các thư viện phụ thuộc
 ```
 
-## Đóng góp
+## Contribute
 
 Dự án vẫn đang trong giai đoạn hoàn thiện, vậy nên mọi đóng góp của mọi người đều rất đáng giá! Nếu mọi người muốn đóng góp vào dự án, hãy làm theo các bước sau:
 
@@ -86,7 +86,7 @@ Dự án vẫn đang trong giai đoạn hoàn thiện, vậy nên mọi đóng g
 5. Mở Pull Request
 
 
-## Liên hệ
+## Contact
 
 Github - [GitHub](https://github.com/QuocAnhh)
 
