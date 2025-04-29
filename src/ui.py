@@ -1461,44 +1461,33 @@ class ChessUI:
         
         y_pos = separator_y + 20
         
-        # Vẽ các thành phần sidebar
         self.draw_game_info(screen, sidebar_rect.left + 20, y_pos)
         y_pos += 100
         
-        # ===== 2. Nút bật/tắt học tập AI =====
         if self.game.game_mode == "pve" and hasattr(self.ai, 'learning_enabled'):
             self.draw_learning_toggle(screen, self.board_size + 20, y_pos)
             y_pos += 60
         
-        # ===== 3. Nút tải dữ liệu PGN =====
         if self.game.game_mode == "pve":
             self.draw_load_pgn_button(screen, self.board_size + 20, y_pos)
             y_pos += 60
         
-        # ===== 4. Thông tin học tập AI =====
         if self.game.game_mode == "pve" and hasattr(self.ai, 'get_learning_stats'):
             self.draw_ai_stats(screen, self.board_size + 20, y_pos)
             y_pos += 160
         
-        # ===== 5. Quân cờ đã bị bắt =====
         self.draw_captured_pieces(screen, self.board_size + 20, y_pos)
         y_pos += 150
         
-        # ===== 6. Lịch sử các nước đi =====
-        # Increase available space for move history
         available_space = self.height - self.status_height - 110 - y_pos
         
-        # Nếu không gian đủ lớn, hiển thị lịch sử
         if available_space >= 120:
             self.draw_move_history(screen, self.board_size + 20, y_pos)
             y_pos += 120
         else:
-            # Hiển thị lịch sử với kích thước nhỏ hơn
             self.draw_move_history(screen, self.board_size + 20, y_pos)
             y_pos += min(available_space - 10, 100)
         
-        # ===== 7. Các nút điều khiển game =====
-        # Place controls at the bottom of sidebar, just above status bar
         controls_y = self.height - self.status_height - 50
         self.draw_game_controls(screen, self.board_size + 20, controls_y)
     
@@ -1530,8 +1519,8 @@ class ChessUI:
         ]
         
         button_count = len(buttons)
-        button_width = taskbar_width / button_count - 10  # Margin between buttons
-        button_height = taskbar_height - 10  # Padding top and bottom
+        button_width = taskbar_width / button_count - 10  
+        button_height = taskbar_height - 10 
         
         mouse_pos = pygame.mouse.get_pos()
         
@@ -1641,7 +1630,6 @@ class ChessUI:
             screen.blit(highlight, (file * self.square_size, (7 - rank) * self.square_size))
     
     def draw_learning_toggle(self, screen, x, y):
-        """Draw AI learning mode toggle button"""
         font_title = pygame.font.SysFont('Arial', 16, bold=True)
         title = font_title.render("Learning Mode", True, (50, 50, 100))
         screen.blit(title, (x, y))
@@ -1676,7 +1664,7 @@ class ChessUI:
         screen.blit(text, (self.board_size + 20, 200))
     
     def run(self):
-        """Chạy game với menu chính"""
+        """Chạy game"""
         self.running = True
         clock = pygame.time.Clock()
         
@@ -1692,7 +1680,6 @@ class ChessUI:
                     if event.type == pygame.MOUSEBUTTONDOWN:
                         pvp_button, pve_button = self.draw_game_menu()
                         
-                        # Kiểm tra click vào nút nào
                         if pvp_button.collidepoint(event.pos):
                             self.start_new_game(GameMode.PLAYER_VS_PLAYER)
                             self.in_menu = False
@@ -1700,7 +1687,6 @@ class ChessUI:
                             self.start_new_game(GameMode.PLAYER_VS_AI)
                             self.in_menu = False
                 else:
-                    # Xử lý sự kiện trong game
                     if not self.handle_event(event):
                         self.running = False
                         break
